@@ -46,7 +46,6 @@ app.use((req, res, next) => {
 // 静态文件路由
 // ==============================================
 app.use(express.static(__dirname));
-
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 app.get('/api/health', (req, res) => { res.status(200).json({ status: 'running', service: 'DormLift', version: '3.0.0 (Ultimate)', port: PORT }); });
 
