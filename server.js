@@ -10,28 +10,24 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const DB_PATH = path.join(__dirname, 'dormlift.db');
 
-// 中间件配置
+// --- 中间件配置 ---
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
-// ==========================================
-// 1. 数据库初始化 (核心：字段完整，外键开启)
-// ==========================================
+// --- 1. 数据库初始化 (确保字段一个不落) ---
 const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) console.error("Database error:", err.message);
-    console.log('✅ SQLite Connected');
+    if (err) console.error("Database connection failed:", err.message);
+    console.log('✅ SQLite Database Connected');
     db.exec(`
         PRAGMA foreign_keys = ON;
-        
-        -- 验证码表
+
         CREATE TABLE IF NOT EXISTS verify_codes (
             email TEXT PRIMARY KEY, 
             code TEXT, 
             expire_at INTEGER
         );
 
-        -- 用户表 (包含所有详细信息)
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             student_id TEXT UNIQUE NOT NULL, 
@@ -46,7 +42,6 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
-        -- 任务表
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             publisher_id TEXT NOT NULL, 
@@ -58,23 +53,21 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
             people_needed INTEGER NOT NULL, 
             reward TEXT NOT NULL, 
             status TEXT DEFAULT 'pending', 
-            helper_id TEXT
+            helper_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     `);
 });
 
-// ==========================================
-// 2. 邮件发送工具 (Google Apps Script)
-// ==========================================
+// --- 2. 邮件发送逻辑 (GAS) ---
 function sendMail(email, code) {
     const data = JSON.stringify({ 
         to: email, 
         subject: 'DormLift Verification Code', 
-        html: `<div style="padding:20px; border:1px solid #eee; border-radius:10px;">
-                <h2 style="color:#3498db;">DormLift Verification</h2>
-                <p>Your verification code is: <b style="font-size:24px; color:#2c3e50;">${code}</b></p>
-                <p>Valid for 5 minutes. Do not share this with anyone.</p>
-               </div>` 
+        html: `<div style="padding:20px;border:1px solid #ddd;border-radius:10px;font-family:sans-serif;">
+                <h2 style="color:#3498db;">DormLift</h2>
+                <p>Your verification code is: <b style="font-size:24px;color:#2c3e50;">${code}</b></p>
+                <p>Valid for 5 minutes.</p></div>` 
     });
     const options = {
         hostname: 'script.google.com',
@@ -83,14 +76,12 @@ function sendMail(email, code) {
         headers: { 'Content-Type': 'text/plain' }
     };
     const req = https.request(options);
-    req.on('error', (e) => console.error("Mail error:", e.message));
+    req.on('error', (e) => console.error("Mail Error:", e.message));
     req.write(data);
     req.end();
 }
 
-// ==========================================
-// 3. API 路由接口 (共 10 个，全面核对)
-// ==========================================
+// --- 3. API 路由 (共10个完整接口) ---
 
 // [1] 发送验证码
 app.post('/api/auth/send-code', (req, res) => {
@@ -99,12 +90,12 @@ app.post('/api/auth/send-code', (req, res) => {
     db.run(`INSERT OR REPLACE INTO verify_codes VALUES (?, ?, ?)`, [req.body.email, code, expire], (err) => {
         if (err) return res.status(500).json({ success: false });
         sendMail(req.body.email, code);
-        console.log(`🔑 Code for ${req.body.email}: ${code}`);
-        res.json({ success: true, message: 'Code sent!' });
+        console.log(`🔑 Verification Code for ${req.body.email}: ${code}`);
+        res.json({ success: true, message: 'Code sent to email' });
     });
 });
 
-// [2] 用户注册
+// [2] 注册
 app.post('/api/auth/register', async (req, res) => {
     const { student_id, email, code, password, school_name, first_name, given_name, gender, anonymous_name, phone } = req.body;
     db.get(`SELECT * FROM verify_codes WHERE email = ?`, [email], async (err, row) => {
@@ -115,25 +106,25 @@ app.post('/api/auth/register', async (req, res) => {
             const hashed = await bcrypt.hash(password, 12);
             db.run(`INSERT INTO users (student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, password) VALUES (?,?,?,?,?,?,?,?,?)`,
                 [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => {
-                    if (err) return res.status(400).json({ success: false, message: 'ID, Email or Phone already registered' });
-                    res.json({ success: true, message: 'Registration successful!' });
+                    if (err) return res.status(400).json({ success: false, message: 'ID, Email or Phone already exists' });
+                    res.json({ success: true });
                 });
         } catch (e) { res.status(500).json({ success: false }); }
     });
 });
 
-// [3] 用户登录
+// [3] 登录
 app.post('/api/auth/login', (req, res) => {
     db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], async (err, user) => {
         if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
-            return res.status(400).json({ success: false, message: 'Invalid Student ID or Password' });
+            return res.status(400).json({ success: false, message: 'Invalid Credentials' });
         }
-        delete user.password; 
+        delete user.password;
         res.json({ success: true, user });
     });
 });
 
-// [4] 获取完整个人资料 (用于 Profile 页刷新)
+// [4] 获取实时个人资料 (用于 Profile 页刷新)
 app.post('/api/user/profile', (req, res) => {
     db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], (err, user) => {
         if (user) { delete user.password; res.json({ success: true, user }); }
@@ -141,58 +132,54 @@ app.post('/api/user/profile', (req, res) => {
     });
 });
 
-// [5] 获取公开任务列表
+// [5] 获取公开任务大厅列表
 app.get('/api/task/list', (req, res) => {
     db.all(`SELECT * FROM tasks WHERE status = 'pending' ORDER BY id DESC`, (err, rows) => {
         res.json({ success: true, list: rows || [] });
     });
 });
 
-// [6] 发布新任务
+// [6] 发布任务
 app.post('/api/task/create', (req, res) => {
     const { publisher_id, move_date, move_time, from_address, to_address, items_desc, people_needed, reward } = req.body;
     db.run(`INSERT INTO tasks (publisher_id, move_date, move_time, from_address, to_address, items_desc, people_needed, reward) VALUES (?,?,?,?,?,?,?,?)`,
-        [publisher_id, move_date, move_time, from_address, to_address, items_desc, people_needed, reward], () => {
-            res.json({ success: true, message: 'Task published!' });
+        [publisher_id, move_date, move_time, from_address, to_address, items_desc, people_needed, reward], (err) => {
+            if (err) return res.status(500).json({ success: false });
+            res.json({ success: true });
         });
 });
 
-// [7] 接受任务 (接单)
+// [7] 接受任务
 app.post('/api/task/apply', (req, res) => {
     db.run(`UPDATE tasks SET status = 'assigned', helper_id = ? WHERE id = ? AND status = 'pending'`, 
-    [req.body.helper_id, req.body.task_id], function(err) {
-        if (this.changes === 0) return res.status(400).json({ success: false, message: 'Task already taken' });
-        res.json({ success: true, message: 'Task accepted!' });
-    });
+        [req.body.helper_id, req.body.task_id], function(err) {
+            if (this.changes === 0) return res.status(400).json({ success: false, message: 'Task no longer available' });
+            res.json({ success: true });
+        });
 });
 
 // [8] 取消任务
 app.post('/api/task/cancel', (req, res) => {
     db.run(`UPDATE tasks SET status = 'cancelled' WHERE id = ?`, [req.body.task_id], () => {
-        res.json({ success: true, message: 'Task cancelled' });
+        res.json({ success: true });
     });
 });
 
-// [9] 获取我发布的任务
+// [9] 我发布的任务
 app.post('/api/task/my-published', (req, res) => {
     db.all(`SELECT * FROM tasks WHERE publisher_id = ? ORDER BY id DESC`, [req.body.student_id], (err, rows) => {
         res.json({ success: true, list: rows || [] });
     });
 });
 
-// [10] 获取我接受的任务
+// [10] 我接受的任务
 app.post('/api/task/my-assigned', (req, res) => {
     db.all(`SELECT * FROM tasks WHERE helper_id = ? ORDER BY id DESC`, [req.body.student_id], (err, rows) => {
         res.json({ success: true, list: rows || [] });
     });
 });
 
-// 启动服务器
+// --- 启动服务器 ---
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-    ====================================
-    🚀 DormLift Backend is Live!
-    📍 Port: ${PORT}
-    ====================================
-    `);
+    console.log(`🚀 DormLift Backend running on port ${PORT}`);
 });
