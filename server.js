@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
-const https = require('https'); // 关键：引入原生 https 模块
+const https = require('https');
 const url = require('url');
 
 const app = express();
@@ -24,7 +24,6 @@ const RATE_LIMIT_MAX = 20;
 
 let db = null;
 let isDbReady = false;
-let verifyCodeStore = {};
 let loginAttempts = {};
 let userLock = {};
 let rateLimit = {};
@@ -32,11 +31,7 @@ let rateLimit = {};
 // ==============================================
 // 中间件
 // ==============================================
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -44,13 +39,10 @@ app.use((req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
   if (!rateLimit[ip]) rateLimit[ip] = { count: 0, time: now };
-  if (now - rateLimit[ip].time > RATE_LIMIT_WINDOW) {
-    rateLimit[ip] = { count: 1, time: now };
-  } else {
+  if (now - rateLimit[ip].time > RATE_LIMIT_WINDOW) { rateLimit[ip] = { count: 1, time: now }; } 
+  else {
     rateLimit[ip].count++;
-    if (rateLimit[ip].count > RATE_LIMIT_MAX) {
-      return res.status(429).json({ success: false, message: 'Too many requests' });
-    }
+    if (rateLimit[ip].count > RATE_LIMIT_MAX) { return res.status(429).json({ success: false, message: 'Too many requests' }); }
   }
   next();
 });
@@ -58,20 +50,8 @@ app.use((req, res, next) => {
 // ==============================================
 // 静态文件与页面路由
 // ==============================================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'running',
-    service: 'DormLift Ultimate Backend',
-    version: '2.0.0',
-    port: PORT,
-    db_connected: isDbReady,
-    timestamp: new Date().toISOString()
-  });
-});
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
+app.get('/api/health', (req, res) => { res.status(200).json({ status: 'running', service: 'DormLift', version: '2.1.0 (DB Verified)', port: PORT, db_connected: isDbReady }); });
 
 // ==============================================
 // 工具函数
@@ -81,26 +61,6 @@ function isValidPhone(phone) { return /^(\+?\d{1,4})?\s?\d{6,14}$/.test(phone); 
 function isValidStudentId(studentId) { return /^[a-zA-Z0-9]{4,20}$/.test(studentId); }
 function generateVerifyCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
 function generateToken() { return crypto.randomBytes(32).toString('hex'); }
-
-function isUserLocked(studentId) {
-  if (!userLock[studentId]) return false;
-  return Date.now() < userLock[studentId];
-}
-
-function cleanExpiredCodes() {
-  const now = Date.now();
-  for (let email in verifyCodeStore) {
-    if (verifyCodeStore[email].expireAt < now) delete verifyCodeStore[email];
-  }
-}
-
-function cleanExpiredRateLimits() {
-  const now = Date.now();
-  for (let ip in rateLimit) {
-    if (now - rateLimit[ip].time > RATE_LIMIT_WINDOW * 2) delete rateLimit[ip];
-  }
-}
-
 function maskEmail(email) {
   if (!email) return '';
   let [name, domain] = email.split('@');
@@ -108,13 +68,18 @@ function maskEmail(email) {
   return name[0] + '***' + name[name.length-1] + '@' + domain;
 }
 
+// ✅ 定期清理数据库里过期的验证码
+function cleanExpiredCodes() {
+  if (db && isDbReady) {
+    db.run(`DELETE FROM verify_codes WHERE expire_at < ?`, [Date.now()]);
+  }
+}
+
 // ==============================================
-// 邮件发送 (Google Apps Script + 底层 HTTPS 防错版)
+// 邮件发送 (Google Apps Script)
 // ==============================================
 function sendVerifyEmail(email, code) {
   return new Promise((resolve) => {
-    
-    // 你的专属 Google Apps Script URL
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzAE3Vyi5B1sdNM--P89E7UDO1VF03lmehb0S6N0tHlvtpvdadDGfyM7jswaUB-RZhU/exec';
 
     console.log(`\n================================`);
@@ -147,21 +112,19 @@ function sendVerifyEmail(email, code) {
       path: parsedUrl.pathname + parsedUrl.search,
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // 必须是 text/plain 防止跨域报错
+        'Content-Type': 'text/plain;charset=utf-8', 
         'Content-Length': Buffer.byteLength(postData)
       }
     };
 
-    // 使用最底层的 https.request，彻底告别 fetch 版本兼容问题
     const req = https.request(options, (res) => {
-      // 只要发出了请求，Google App Script 就会执行，直接算作成功
       console.log(`✅ Mail request sent to Google Apps Script for ${maskEmail(email)}`);
       resolve(true); 
     });
 
     req.on('error', (e) => {
       console.error('HTTPS Request Error:', e.message);
-      resolve(true); // 保证页面不卡住
+      resolve(true); 
     });
 
     req.write(postData);
@@ -179,6 +142,14 @@ function initDatabase() {
 
     db.exec(`
       PRAGMA foreign_keys = ON;
+      
+      -- ✅ 新增：验证码专用表（不怕重启了！）
+      CREATE TABLE IF NOT EXISTS verify_codes (
+        email TEXT PRIMARY KEY,
+        code TEXT NOT NULL,
+        expire_at INTEGER NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id TEXT UNIQUE NOT NULL,
@@ -229,12 +200,17 @@ app.post('/api/auth/send-code', async (req, res) => {
     cleanExpiredCodes();
     const code = generateVerifyCode();
     const expireAt = Date.now() + VERIFY_CODE_EXPIRE_SECONDS * 1000;
-    verifyCodeStore[email] = { code, expireAt };
 
-    await sendVerifyEmail(email, code);
-    
-    // 永远返回成功
-    res.json({ success: true, message: 'Verification code sent' });
+    // ✅ 把验证码存进 SQLite 数据库
+    db.serialize(() => {
+      db.run(`DELETE FROM verify_codes WHERE email = ?`, [email]);
+      db.run(`INSERT INTO verify_codes (email, code, expire_at) VALUES (?, ?, ?)`, [email, code, expireAt], async (err) => {
+        if (err) return res.status(500).json({ success: false, message: 'DB error' });
+        
+        await sendVerifyEmail(email, code);
+        res.json({ success: true, message: 'Verification code sent' });
+      });
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
@@ -243,21 +219,31 @@ app.post('/api/auth/send-code', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { student_id, first_name, given_name, gender, anonymous_name, phone, email, password, code } = req.body;
-    cleanExpiredCodes();
-    const record = verifyCodeStore[email];
     
-    if (!record || record.code !== code) return res.status(400).json({ success: false, message: 'Invalid code' });
-    delete verifyCodeStore[email];
+    cleanExpiredCodes();
 
-    const hashedPwd = await bcrypt.hash(password, SALT_ROUNDS);
-    db.run(`INSERT INTO users (student_id, first_name, given_name, gender, anonymous_name, phone, email, password)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [student_id, first_name, given_name, gender, anonymous_name, phone, email, hashedPwd],
-      function (err) {
-        if (err) return res.status(400).json({ success: false, message: 'User already exists or bad data' });
-        res.json({ success: true, message: 'Registration successful' });
+    // ✅ 从数据库里核对验证码
+    db.get(`SELECT * FROM verify_codes WHERE email = ?`, [email], async (err, record) => {
+      if (err || !record || record.code !== code || Date.now() > record.expire_at) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired code' });
       }
-    );
+
+      // 验证码用完即毁，防止重复注册
+      db.run(`DELETE FROM verify_codes WHERE email = ?`, [email]);
+
+      const hashedPwd = await bcrypt.hash(password, SALT_ROUNDS);
+      db.run(`INSERT INTO users (student_id, first_name, given_name, gender, anonymous_name, phone, email, password)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [student_id, first_name, given_name, gender, anonymous_name, phone, email, hashedPwd],
+        function (err) {
+          if (err) {
+            console.error(err);
+            return res.status(400).json({ success: false, message: 'User already exists or bad data' });
+          }
+          res.json({ success: true, message: 'Registration successful' });
+        }
+      );
+    });
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
