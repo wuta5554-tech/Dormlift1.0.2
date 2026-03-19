@@ -135,7 +135,7 @@ function maskEmail(email) {
 }
 
 // ==============================================
-// 邮件发送
+// 邮件发送（防卡死版）
 // ==============================================
 async function sendVerifyEmail(email, code) {
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
@@ -145,13 +145,25 @@ async function sendVerifyEmail(email, code) {
 
   try {
     let transporter = nodemailer.createTransport({
-      host: 'smtp.office365.com',
+      // 如果你使用的是个人 Outlook/Hotmail 邮箱，推荐用 smtp-mail.outlook.com
+      // 如果你绑定的是大学/企业 Office365 邮箱，推荐用 smtp.office365.com
+      host: 'smtp-mail.outlook.com', 
       port: 587,
-      secure: false, // 修改点：移除旧的 SSLv3，使用安全的 STARTTLS
+      secure: false, // 587 端口必须为 false，使用 STARTTLS
+      requireTLS: true, // 强制启用 TLS
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD
-      }
+      },
+      tls: {
+        ciphers: 'SSLv3',
+        // 关键修复：忽略云平台上可能出现的自签名或证书链校验问题
+        rejectUnauthorized: false 
+      },
+      // 关键修复：设置 10 秒超时。如果连不上直接报错，绝不让前端死等
+      connectionTimeout: 10000, 
+      greetingTimeout: 10000,
+      socketTimeout: 10000
     });
 
     await transporter.sendMail({
@@ -179,11 +191,11 @@ async function sendVerifyEmail(email, code) {
     });
     return true;
   } catch (err) {
+    // 这样如果失败，你能立刻在 Railway 的 Deploy Logs 里看到具体的报错原因
     console.error('Send email failed:', err.message);
     return false;
   }
 }
-
 // ==============================================
 // 数据库初始化
 // ==============================================
