@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DormLift - Affordable Moving Help</title>
     <style>
-        /* 保持原有CSS样式完全不变 */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         body { background-color: #f5f7fa; color: #34495e; line-height: 1.6; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
@@ -215,7 +214,8 @@
 
     <script>
         let currentUser = null;
-        const API_BASE_URL = window.location.origin;
+        // 使用相对路径，自动适配前后端同域名
+        const API_BASE_URL = '';
 
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -248,7 +248,6 @@
 
             btn.disabled = true; btn.textContent = 'Sending...';
             try {
-                // 完全对齐后端API
                 const res = await fetch(`${API_BASE_URL}/api/auth/send-code`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -262,7 +261,7 @@
                         if (c <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = 'Get Code'; }
                     }, 1000);
                 } else { btn.disabled = false; btn.textContent = 'Get Code'; }
-            } catch (e) { alert('Error'); btn.disabled = false; btn.textContent = 'Get Code'; }
+            } catch (e) { alert('Error sending code. Please try again.'); btn.disabled = false; btn.textContent = 'Get Code'; }
         }
 
         async function register() {
@@ -273,7 +272,7 @@
                 student_id: document.getElementById('reg-student-id').value.trim(),
                 first_name: document.getElementById('reg-first-name').value.trim(),
                 given_name: document.getElementById('reg-given-name').value.trim(),
-                gender: document.getElementById('reg-gender').value.toLowerCase(), // 转小写配合数据库限制
+                gender: document.getElementById('reg-gender').value.toLowerCase(), 
                 email: document.getElementById('reg-email').value.trim(),
                 code: document.getElementById('reg-verification-code').value.trim(),
                 phone: document.getElementById('reg-phone').value.trim(),
@@ -282,7 +281,6 @@
             };
 
             try {
-                // 完全对齐后端API和字段
                 const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -298,7 +296,6 @@
             const password = document.getElementById('login-password').value;
 
             try {
-                // 完全对齐后端API和字段
                 const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ student_id, password })
@@ -322,7 +319,6 @@
         async function loadProfile() {
             if (!currentUser) return;
             try {
-                // 完全对齐后端API
                 const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ student_id: currentUser.student_id })
@@ -338,7 +334,7 @@
         }
 
         async function submitMovingRequest() {
-            const dt = document.getElementById('move-date').value; // e.g. "2026-03-20T14:30"
+            const dt = document.getElementById('move-date').value;
             if (!dt) return alert("Date required");
             const [move_date, move_time] = dt.split('T');
 
@@ -354,7 +350,6 @@
             };
 
             try {
-                // 完全对齐后端API和字段
                 const res = await fetch(`${API_BASE_URL}/api/task/create`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -369,7 +364,6 @@
             const container = document.getElementById('task-list-container');
             container.innerHTML = 'Loading...';
             try {
-                // 完全对齐后端API和解析结果 list
                 const res = await fetch(`${API_BASE_URL}/api/task/list`);
                 const data = await res.json();
                 if (data.success && data.list.length > 0) {
