@@ -145,7 +145,7 @@ async function sendVerifyEmail(email, code) {
 
   try {
     let transporter = nodemailer.createTransport({
-      host: 'smtp.office365.com',
+      host: 'smtp-mail.outlook.com',
       port: 587,
       secure: false, // 587 端口必须为 false，使用 STARTTLS
       requireTLS: true,
