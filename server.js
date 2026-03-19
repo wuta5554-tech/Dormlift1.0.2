@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const SALT_ROUNDS = 12;
 const VERIFY_CODE_EXPIRE_SECONDS = 5 * 60;
-// 修改点：改为当前目录，防止Railway每次部署清空 /tmp 数据
+// 数据库保存在根目录，配合 Railway Volume 防止重启丢失
 const DB_PATH = path.join(__dirname, 'dormlift.db'); 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME_MINUTES = 15;
@@ -65,7 +65,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 2. 把原来的健康检查接口移到 /api/health，方便你随时查看后端状态
+// 2. 健康检查接口，用于查看后端状态
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'running',
@@ -135,7 +135,7 @@ function maskEmail(email) {
 }
 
 // ==============================================
-// 邮件发送（防卡死版）
+// 邮件发送（最终防卡死、防拒收版本）
 // ==============================================
 async function sendVerifyEmail(email, code) {
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
@@ -145,23 +145,20 @@ async function sendVerifyEmail(email, code) {
 
   try {
     let transporter = nodemailer.createTransport({
-      // 如果你使用的是个人 Outlook/Hotmail 邮箱，推荐用 smtp-mail.outlook.com
-      // 如果你绑定的是大学/企业 Office365 邮箱，推荐用 smtp.office365.com
-      host: 'smtp-mail.outlook.com', 
+      host: 'smtp.office365.com',
       port: 587,
       secure: false, // 587 端口必须为 false，使用 STARTTLS
-      requireTLS: true, // 强制启用 TLS
+      requireTLS: true,
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD
       },
       tls: {
-        ciphers: 'SSLv3',
-        // 关键修复：忽略云平台上可能出现的自签名或证书链校验问题
-        rejectUnauthorized: false 
+        // 忽略可能导致云服务器握手失败的证书链校验
+        rejectUnauthorized: false
       },
-      // 关键修复：设置 10 秒超时。如果连不上直接报错，绝不让前端死等
-      connectionTimeout: 10000, 
+      // 10秒超时控制，绝生死等
+      connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000
     });
@@ -191,11 +188,11 @@ async function sendVerifyEmail(email, code) {
     });
     return true;
   } catch (err) {
-    // 这样如果失败，你能立刻在 Railway 的 Deploy Logs 里看到具体的报错原因
     console.error('Send email failed:', err.message);
     return false;
   }
 }
+
 // ==============================================
 // 数据库初始化
 // ==============================================
@@ -303,7 +300,7 @@ app.post('/api/auth/send-code', async (req, res) => {
 
     const emailSent = await sendVerifyEmail(email, code);
     if (!emailSent && process.env.SMTP_EMAIL) {
-       return res.status(500).json({ success: false, message: 'Failed to send email. Check SMTP settings.' });
+       return res.status(500).json({ success: false, message: 'Failed to send email. Check SMTP settings or Railway logs.' });
     }
 
     writeLog('VERIFY_CODE_SENT', `Email: ${maskEmail(email)}`, req);
@@ -475,7 +472,6 @@ app.post('/api/task/apply', (req, res) => {
     if (err || !task) return res.status(400).json({ success: false, message: 'Task unavailable' });
     if (task.publisher_id === helper_id) return res.status(400).json({ success: false, message: 'Can not apply your own task' });
 
-    // 直接分配给帮手（MVP简单逻辑）
     db.run(`UPDATE tasks SET status = 'assigned', helper_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [helper_id, task_id], (err) => {
         if (err) return res.status(500).json({ success: false });
