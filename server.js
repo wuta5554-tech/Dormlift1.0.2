@@ -6,11 +6,11 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const https = require('https'); // ✉️ 恢复 HTTPS 模块用于发邮件
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const DB_PATH = path.join(__dirname, 'dormlift_v9.db');
+const DB_PATH = path.join(__dirname, 'dormlift.db');
 
 // --- 1. Cloudinary 配置 ---
 cloudinary.config({ 
@@ -22,7 +22,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'dormlift_v9',
+    folder: 'dormlift_production',
     allowed_formats: ['jpg', 'png', 'jpeg'],
     public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
   },
@@ -33,50 +33,58 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// --- 2. 数据库初始化 (恢复验证码表) ---
+// --- 2. 数据库初始化 ---
 const db = new sqlite3.Database(DB_PATH, () => {
+    console.log('✅ Database Connected');
     db.serialize(() => {
+        // 重置表结构，确保新字段生效（上线稳定后可移除 DROP 语句）
         db.run("DROP TABLE IF EXISTS verify_codes");
-        db.run("CREATE TABLE verify_codes (email TEXT PRIMARY KEY, code TEXT, expire_at INTEGER)");
+        db.run("DROP TABLE IF EXISTS users");
+        db.run("DROP TABLE IF EXISTS tasks");
+        db.run("DROP TABLE IF EXISTS reviews");
 
-        db.run(`CREATE TABLE IF NOT EXISTS users (
+        db.run(`CREATE TABLE verify_codes (email TEXT PRIMARY KEY, code TEXT, expire_at INTEGER)`);
+
+        db.run(`CREATE TABLE users (
             student_id TEXT PRIMARY KEY, school_name TEXT, first_name TEXT, given_name TEXT, 
             gender TEXT, anonymous_name TEXT, phone TEXT, email TEXT, password TEXT,
             rating_avg REAL DEFAULT 5.0, task_count INTEGER DEFAULT 0
         )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS tasks (
+        db.run(`CREATE TABLE tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT, publisher_id TEXT, helper_id TEXT,
             move_date TEXT, move_time TEXT, from_addr TEXT, to_addr TEXT, 
             items_desc TEXT, reward TEXT, has_elevator INTEGER, load_weight TEXT, 
             img_url TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS reviews (
+        db.run(`CREATE TABLE reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, from_id TEXT, to_id TEXT, score INTEGER, comment TEXT
         )`);
     });
 });
 
-// --- ✉️ 3. 邮件发送服务 ---
+// --- 3. 邮件发送服务 ---
 function sendMail(email, code) {
-    const data = JSON.stringify({ to: email, subject: 'DormLift Verification', html: `Your code is: <b>${code}</b>` });
+    const data = JSON.stringify({ to: email, subject: 'DormLift Verification', html: `Your verification code is: <b>${code}</b>` });
     const req = https.request('https://script.google.com/macros/s/AKfycbzAE3Vyi5B1sdNM--P89E7UDO1VF03lmehb0S6N0tHlvtpvdadDGfyM7jswaUB-RZhU/exec', 
     { method: 'POST', headers: {'Content-Type': 'text/plain'} });
     req.on('error', (e) => console.error("Mail Error:", e.message));
-    req.write(data); req.end();
+    req.write(data); 
+    req.end();
 }
 
 app.post('/api/auth/send-code', (req, res) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    db.run(`INSERT OR REPLACE INTO verify_codes VALUES (?, ?, ?)`, [req.body.email, code, Date.now() + 300000], () => {
+    db.run(`INSERT OR REPLACE INTO verify_codes VALUES (?, ?, ?)`, [req.body.email, code, Date.now() + 300000], (err) => {
+        if (err) return res.status(500).json({ success: false });
         sendMail(req.body.email, code);
         console.log(`🔑 Verification Code for ${req.body.email}: ${code}`);
         res.json({ success: true });
     });
 });
 
-// --- 4. 核心 API (注册引入验证码校验) ---
+// --- 4. 身份验证 API ---
 app.post('/api/auth/register', async (req, res) => {
     const { student_id, email, code, password, school_name, first_name, given_name, gender, anonymous_name, phone } = req.body;
     db.get(`SELECT * FROM verify_codes WHERE email = ?`, [email], async (err, row) => {
@@ -85,33 +93,49 @@ app.post('/api/auth/register', async (req, res) => {
         }
         const hashed = await bcrypt.hash(password, 10);
         db.run(`INSERT INTO users (student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, password) VALUES (?,?,?,?,?,?,?,?,?)`,
-            [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => res.json({ success: !err }));
+            [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => {
+                if (err) return res.status(400).json({ success: false, message: 'User already exists' });
+                res.json({ success: true });
+            });
     });
 });
 
 app.post('/api/auth/login', (req, res) => {
     db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], async (err, user) => {
         if (!user || !(await bcrypt.compare(req.body.password, user.password))) return res.status(400).json({ success: false });
-        delete user.password; res.json({ success: true, user });
+        delete user.password; 
+        res.json({ success: true, user });
     });
 });
 
+// --- 5. 任务与流转 API ---
 app.post('/api/task/create', upload.single('task_image'), (req, res) => {
     const { publisher_id, move_date, move_time, from_addr, to_addr, items_desc, reward, has_elevator, load_weight } = req.body;
     const imgUrl = req.file ? req.file.path : '';
+    
     const sql = `INSERT INTO tasks (publisher_id, move_date, move_time, from_addr, to_addr, items_desc, reward, has_elevator, load_weight, img_url) VALUES (?,?,?,?,?,?,?,?,?,?)`;
-    db.run(sql, [publisher_id, move_date, move_time, from_addr, to_addr, items_desc, reward, has_elevator, load_weight, imgUrl], () => res.json({ success: true }));
+    db.run(sql, [publisher_id, move_date, move_time, from_addr, to_addr, items_desc, reward, has_elevator, load_weight, imgUrl], (err) => {
+        if (err) return res.status(500).json({ success: false });
+        res.json({ success: true });
+    });
 });
 
 app.get('/api/task/all', (req, res) => {
-    db.all(`SELECT t.*, u.anonymous_name as pub_name, u.rating_avg FROM tasks t JOIN users u ON t.publisher_id = u.student_id WHERE t.status = 'pending' ORDER BY t.id DESC`, (err, rows) => res.json({ success: true, list: rows || [] }));
+    const sql = `SELECT t.*, u.anonymous_name as pub_name, u.rating_avg 
+                 FROM tasks t JOIN users u ON t.publisher_id = u.student_id 
+                 WHERE t.status = 'pending' ORDER BY t.id DESC`;
+    db.all(sql, [], (err, rows) => res.json({ success: true, list: rows || [] }));
 });
 
 app.post('/api/task/workflow', (req, res) => {
     const { task_id, status, helper_id } = req.body;
     let sql = helper_id ? `UPDATE tasks SET status = ?, helper_id = ? WHERE id = ?` : `UPDATE tasks SET status = ? WHERE id = ?`;
     let params = helper_id ? [status, helper_id, task_id] : [status, task_id];
-    db.run(sql, params, () => res.json({ success: true }));
+    
+    db.run(sql, params, (err) => {
+        if (err) return res.status(500).json({ success: false });
+        res.json({ success: true });
+    });
 });
 
 app.post('/api/task/review', (req, res) => {
@@ -123,12 +147,19 @@ app.post('/api/task/review', (req, res) => {
     });
 });
 
+// --- 6. 用户资料与仪表盘 API ---
 app.post('/api/user/profile', (req, res) => {
-    db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], (err, row) => res.json({ success: true, user: row }));
+    db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], (err, row) => {
+        if (row) delete row.password;
+        res.json({ success: true, user: row });
+    });
 });
 
 app.post('/api/user/dashboard', (req, res) => {
-    db.all(`SELECT * FROM tasks WHERE publisher_id = ? OR helper_id = ? ORDER BY id DESC`, [req.body.student_id, req.body.student_id], (err, rows) => res.json({ success: true, list: rows || [] }));
+    const sql = `SELECT * FROM tasks WHERE publisher_id = ? OR helper_id = ? ORDER BY id DESC`;
+    db.all(sql, [req.body.student_id, req.body.student_id], (err, rows) => {
+        res.json({ success: true, list: rows || [] });
+    });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 V9.0 Full Engine Active on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Production Server running on ${PORT}`));
