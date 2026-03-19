@@ -176,15 +176,18 @@
         function updateNav() {
             const nav = document.getElementById('nav-menu');
             if (currentUser) {
+                // 已登录
                 nav.innerHTML = `
-                    <a onclick="navigate('home')">Find Tasks</a>
+                    <a onclick="navigate('home')">Home</a>
                     <a onclick="navigate('post-task')">Post Task</a>
                     <a onclick="navigate('profile')">My Profile</a>
                     <a onclick="logout()" class="btn">${currentUser.anonymous_name} (Logout)</a>
                 `;
             } else {
+                // 未登录 (全部展示，但引导登录)
                 nav.innerHTML = `
-                    <a onclick="navigate('home')">Find Tasks</a>
+                    <a onclick="navigate('home')">Home</a>
+                    <a onclick="navigate('post-task')">Post Task</a>
                     <a onclick="navigate('login')">Login</a>
                     <a onclick="navigate('register')" class="btn">Register</a>
                 `;
@@ -192,6 +195,12 @@
         }
 
         function navigate(pageId) {
+            // 核心拦截：未登录用户不能进入发布页
+            if (pageId === 'post-task' && !currentUser) {
+                alert('Please login first to post a task!');
+                pageId = 'login';
+            }
+
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             
@@ -348,19 +357,17 @@
             alert(data.message); loadTasks();
         }
 
-        // 💡 补回来的取消任务功能
         async function cancelTask(taskId) {
             if (!confirm('Are you sure you want to cancel this task?')) return;
             const res = await fetch(`${API}/task/cancel`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task_id: taskId }) });
             const data = await res.json();
-            alert(data.message); loadProfile(); // 刷新个人中心
+            alert(data.message); loadProfile(); 
         }
 
         // ==========================================
         // 个人中心逻辑
         // ==========================================
         async function loadProfile() {
-            // 每次打开Profile都去后台拉取最新的个人信息（防止本地缓存过期）
             const resUser = await fetch(`${API}/user/profile`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: currentUser.student_id }) });
             const dataUser = await resUser.json();
             if(dataUser.success) currentUser = dataUser.user;
@@ -396,7 +403,6 @@
             let actionBtn = '';
             let badgeClass = task.status === 'cancelled' ? 'cancelled' : (task.status === 'assigned' ? 'assigned' : '');
 
-            // 根据不同的视图类型显示不同的按钮
             if (viewType === 'public') {
                 if (currentUser && currentUser.student_id !== task.publisher_id) {
                     actionBtn = `<button class="btn" onclick="acceptTask(${task.id})" style="width:100%; margin-top:10px;">Accept Task</button>`;
@@ -404,7 +410,6 @@
                     actionBtn = `<button class="btn btn-outline" onclick="navigate('login')" style="width:100%; margin-top:10px;">Login to Accept</button>`;
                 }
             } else if (viewType === 'published' && task.status === 'pending') {
-                // 如果是在个人发布的列表里，且任务还是 pending 状态，显示取消按钮
                 actionBtn = `<button class="btn btn-danger" onclick="cancelTask(${task.id})" style="width:100%; margin-top:10px;">Cancel Task</button>`;
             }
 
