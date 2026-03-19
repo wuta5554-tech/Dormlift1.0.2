@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DormLift Pro V9.0 - Complete Edition</title>
+    <title>DormLift Pro - Ultimate Edition</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,7 +13,7 @@
         :root { --primary: #3498db; --bg: #f4f7f9; --text: #2c3e50; --card: #fff; --border: #e1e8ed; --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; }
         body { margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
-        /* 导航栏 */
+        /* --- 导航栏 --- */
         nav { background: var(--card); padding: 18px 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; }
         .logo { font-size: 24px; font-weight: 800; color: var(--text); cursor: pointer; }
         .nav-links { display: flex; gap: 30px; align-items: center; }
@@ -26,7 +26,7 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 落地页 Hero Section */
+        /* --- 落地页 Hero Section --- */
         .hero-section { background: white; padding: 60px 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
         .hero-section h1 { font-size: 42px; color: var(--text); margin-top: 0; margin-bottom: 20px; letter-spacing: -1px; }
         .hero-section p { font-size: 18px; color: #657786; max-width: 700px; margin: 0 auto 30px; line-height: 1.6; }
@@ -35,7 +35,7 @@
         .feature-card { background: white; padding: 40px 30px; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .feature-icon { width: 70px; height: 70px; background: #eaf6ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 20px; }
 
-        /* 核心 UI 库 */
+        /* --- 核心 UI 库 --- */
         .btn { padding: 14px 28px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 15px; display: inline-block; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-outline { background: transparent; color: #657786; border: 2px solid var(--border); }
@@ -43,33 +43,32 @@
         .input-pro { width: 100%; padding: 14px; border: 1.5px solid var(--border); border-radius: 10px; box-sizing: border-box; margin-bottom: 15px; font-size: 15px; transition: 0.2s; }
         .input-pro:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
 
-        /* 任务大厅与看版 */
+        /* --- 任务大厅与看板 --- */
         .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
         .pro-card { background: white; border-radius: 16px; padding: 25px; border: 1px solid var(--border); transition: 0.3s; position: relative; }
         .pro-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
         .task-img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 15px; background: #eee; }
         
-        /* 仪表盘 */
         .dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .dash-col { background: #f0f4f8; padding: 20px; border-radius: 16px; min-height: 500px; border: 1px solid #e1e8ed; }
         .dash-col h4 { margin: 0 0 20px 0; color: #2c3e50; font-size: 16px; }
 
-        /* 表单与图片上传 */
+        /* --- 表单与地图 --- */
         .form-box { background: white; padding: 50px; border-radius: 20px; border: 1px solid var(--border); max-width: 800px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,0.03); }
-        #map { height: 350px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); z-index: 1; }
+        #map { height: 350px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); z-index: 1; }
         .file-label { display: block; background: #f8f9fa; border: 2px dashed #cbd5e1; padding: 30px; text-align: center; cursor: pointer; border-radius: 12px; margin-bottom: 20px; color: #64748b; font-weight: 600; transition: 0.2s; }
         .file-label:hover { border-color: var(--primary); background: #f0f7ff; color: var(--primary); }
 
-        /* 全量个人资料 */
+        /* --- 个人资料卡 --- */
         .profile-card { background: white; padding: 50px; border-radius: 20px; border: 1px solid var(--border); display: flex; gap: 50px; align-items: center; }
         .avatar { width: 120px; height: 120px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; }
         .info-item label { display: block; font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-item span { font-weight: 600; font-size: 16px; color: var(--text); }
 
-        /* 评价模态框与加载 */
+        /* --- 弹窗体系 --- */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 400px; text-align: center; }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 400px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
         .stars { font-size: 35px; color: #e2e8f0; margin: 25px 0; cursor: pointer; }
         .stars .active { color: var(--warning); }
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
@@ -120,7 +119,10 @@
         <div id="post-task" class="page">
             <div class="form-box">
                 <h2 style="margin-top:0; margin-bottom:30px; text-align:center;">Create Move Request</h2>
+                
                 <div id="map"></div>
+                <div id="route-info" style="margin-bottom:20px; font-weight:700; color:var(--primary); font-size:15px; text-align:center;"></div>
+                
                 <form id="v8-post-form">
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
                         <input type="text" id="p_from" placeholder="Pickup Address (Click Map)" class="input-pro" required>
@@ -187,7 +189,7 @@
                         <input type="email" id="r_email" placeholder="Campus Email" class="input-pro" required>
                         <div style="display:flex; gap:12px;">
                             <input type="text" id="r_code" placeholder="6-digit verification code" class="input-pro" style="margin:0;" required>
-                            <button type="button" class="btn btn-primary" style="padding:10px 25px; height:48px;" onclick="sendCode()">Get Code</button>
+                            <button type="button" class="btn btn-primary" style="padding:10px 25px; height:48px; white-space:nowrap;" onclick="sendCode()">Get Code</button>
                         </div>
                     </div>
 
@@ -207,6 +209,15 @@
         </div>
     </div>
 
+    <div id="details-modal" class="modal">
+        <div class="modal-content" style="width: 500px; text-align: left; position: relative;">
+            <i class="fa-solid fa-xmark" style="position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; color: #94a3b8;" onclick="document.getElementById('details-modal').style.display='none'"></i>
+            <h3 style="margin-top:0; margin-bottom:20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">Task Details</h3>
+            <div id="details-body">
+                </div>
+        </div>
+    </div>
+
     <div id="review-modal" class="modal">
         <div class="modal-content">
             <h3 style="margin-top:0;">Rate Your Helper</h3>
@@ -214,16 +225,19 @@
                 <i class="fa-solid fa-star" data-v="1"></i><i class="fa-solid fa-star" data-v="2"></i><i class="fa-solid fa-star" data-v="3"></i><i class="fa-solid fa-star" data-v="4"></i><i class="fa-solid fa-star" data-v="5"></i>
             </div>
             <textarea id="rev-comment" class="input-pro" placeholder="Leave a review..." rows="3"></textarea>
-            <button class="btn btn-primary" onclick="submitReview()">Submit Rating</button>
+            <button class="btn btn-primary" onclick="submitReview()" style="width:100%;">Submit Rating</button>
         </div>
     </div>
 
     <script>
+        // 配置你的服务器地址，本地测试可保留为 '/api'
         const API = '/api'; 
+        
+        // 全局状态变量
         let user = JSON.parse(localStorage.getItem('user')) || null;
-        let map=null, markers=[], curRevTask=null, curScore=5;
+        let map=null, markers=[], routeLine=null, dashTasks=[], curRevTask=null, curScore=5;
 
-        // --- 导航逻辑与权限拦截 ---
+        // --- 1. 导航与页面拦截逻辑 ---
         function navigate(p) {
             if(!user && ['dashboard', 'post-task', 'profile'].includes(p)) { 
                 alert("Please log in to access this feature.");
@@ -263,21 +277,44 @@
         const pAct = (id) => document.getElementById(id).classList.contains('active') ? 'active-link' : '';
         function logout() { localStorage.clear(); location.reload(); }
 
-        // --- 地图取点逻辑 ---
+        // --- 2. 交互式地图 (画线 + 计算距离) ---
         function initMap() {
             if(map) { map.invalidateSize(); return; }
             map = L.map('map').setView([-36.8509, 174.7645], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            
             map.on('click', e => {
-                if(markers.length>=2) { markers.forEach(m=>map.removeLayer(m)); markers=[]; }
-                let m = L.marker(e.latlng).addTo(map); markers.push(m);
+                if(markers.length >= 2) { 
+                    markers.forEach(m => map.removeLayer(m)); 
+                    markers = []; 
+                    if(routeLine) map.removeLayer(routeLine);
+                    document.getElementById('route-info').innerHTML = '';
+                }
+                
+                let m = L.marker(e.latlng).addTo(map); 
+                markers.push(m);
                 const loc = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-                if(markers.length===1) document.getElementById('p_from').value = loc;
-                else document.getElementById('p_to').value = loc;
+                
+                if(markers.length === 1) {
+                    document.getElementById('p_from').value = loc;
+                    document.getElementById('route-info').innerHTML = '<span style="color:#64748b">Please click map again for destination...</span>';
+                } else {
+                    document.getElementById('p_to').value = loc;
+                    const p1 = markers[0].getLatLng();
+                    const p2 = markers[1].getLatLng();
+                    
+                    // 画蓝色虚线
+                    routeLine = L.polyline([p1, p2], {color: '#3498db', weight: 4, dashArray: '8, 8'}).addTo(map);
+                    map.fitBounds(routeLine.getBounds(), {padding: [30, 30]});
+                    
+                    // 计算距离 (公里)
+                    const distanceInKm = (p1.distanceTo(p2) / 1000).toFixed(2);
+                    document.getElementById('route-info').innerHTML = `<i class="fa-solid fa-route"></i> Estimated Distance: <b>${distanceInKm} km</b>`;
+                }
             });
         }
 
-        // --- 渲染大厅 ---
+        // --- 3. 渲染大厅 ---
         async function loadHall() {
             const r = await fetch(`${API}/task/all`); const d = await r.json();
             const hall = document.getElementById('hall');
@@ -304,20 +341,34 @@
             `).join('');
         }
 
-        // --- 渲染看板与状态机 ---
+        // --- 4. 渲染看板 (包含详情弹窗) ---
         async function loadDash() {
             const r = await fetch(`${API}/user/dashboard`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})});
             const d = await r.json();
+            dashTasks = d.list; 
+            
             const col = { pending: '', assigned: '', finished: '' };
-            d.list.forEach(t => {
+            dashTasks.forEach(t => {
                 const isPub = t.publisher_id === user.student_id;
-                let btn = '';
-                if(t.status==='assigned' && isPub) btn = `<button class="btn btn-primary" style="margin-top:15px; padding:10px;" onclick="workflow(${t.id}, 'completed')">Confirm Delivery</button>`;
-                if(t.status==='completed' && isPub) btn = `<button class="btn btn-primary" style="margin-top:15px; padding:10px; background:var(--warning);" onclick="openReview(${t.id}, '${t.helper_id}')">Rate Helper</button>`;
+                let actionBtn = '';
+                if(t.status==='assigned' && isPub) actionBtn = `<button class="btn btn-primary" style="flex:1; padding:10px;" onclick="workflow(${t.id}, 'completed')">Confirm</button>`;
+                if(t.status==='completed' && isPub) actionBtn = `<button class="btn btn-primary" style="flex:1; padding:10px; background:var(--warning);" onclick="openReview(${t.id}, '${t.helper_id}')">Rate</button>`;
                 
-                const roleBadge = isPub ? `<span style="background:#f1f5f9; color:#64748b; padding:2px 6px; border-radius:4px; font-size:10px;">Published</span>` : `<span style="background:#eaf6ff; color:#3b82f6; padding:2px 6px; border-radius:4px; font-size:10px;">Helping</span>`;
+                const roleBadge = isPub ? `<span style="background:#f1f5f9; color:#64748b; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700;">You Published</span>` : `<span style="background:#eaf6ff; color:#3b82f6; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700;">You are Helping</span>`;
                 
-                const h = `<div class="pro-card" style="padding:15px;"><div style="display:flex; justify-content:space-between; margin-bottom:10px;">${roleBadge} <small style="color:#94a3b8;">${t.move_date}</small></div><p style="margin:0; font-size:14px; color:#334155;">${t.items_desc}</p>${btn}</div>`;
+                const h = `
+                <div class="pro-card" style="padding:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center;">
+                        ${roleBadge} <span style="font-weight:800; color:var(--success); font-size:16px;">${t.reward}</span>
+                    </div>
+                    <p style="margin:0 0 8px 0; font-size:14px; color:#334155;"><i class="fa-regular fa-clock" style="margin-right:8px; color:#94a3b8;"></i>${t.move_date} ${t.move_time}</p>
+                    <p style="margin:0 0 15px 0; font-size:14px; color:#64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.from_addr} → ${t.to_addr}</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-outline" style="flex:1; padding:10px; background:#f8f9fa;" onclick="showTaskDetails(${t.id})">Details</button>
+                        ${actionBtn}
+                    </div>
+                </div>`;
+                
                 if(t.status==='pending') col.pending += h;
                 else if(t.status==='assigned') col.assigned += h;
                 else col.finished += h;
@@ -327,14 +378,61 @@
             document.getElementById('col-finished').innerHTML = '<h4>History ✅</h4>' + col.finished;
         }
 
+        function showTaskDetails(taskId) {
+            const t = dashTasks.find(x => x.id === taskId);
+            if(!t) return;
+            
+            const html = `
+                ${t.img_url ? `<img src="${t.img_url}" style="width:100%; height:220px; object-fit:cover; border-radius:12px; margin-bottom:20px; border:1px solid #e2e8f0;">` : ''}
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div style="background:#f8f9fa; padding:12px; border-radius:8px;">
+                        <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:800; margin-bottom:4px;">Reward</div>
+                        <div style="font-weight:700; color:var(--success); font-size:16px;">${t.reward}</div>
+                    </div>
+                    <div style="background:#f8f9fa; padding:12px; border-radius:8px;">
+                        <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:800; margin-bottom:4px;">Date & Time</div>
+                        <div style="font-weight:600; color:#334155;">${t.move_date} ${t.move_time}</div>
+                    </div>
+                    <div style="background:#f8f9fa; padding:12px; border-radius:8px;">
+                        <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:800; margin-bottom:4px;">Logistics</div>
+                        <div style="font-weight:600; color:#334155;">${t.load_weight || 'N/A'}</div>
+                    </div>
+                    <div style="background:#f8f9fa; padding:12px; border-radius:8px;">
+                        <div style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:800; margin-bottom:4px;">Elevator</div>
+                        <div style="font-weight:600; color:#334155;">${t.has_elevator ? '<span style="color:var(--success)">Available ✅</span>' : '<span style="color:var(--danger)">Stairs Only ❌</span>'}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <div style="font-size:12px; color:#94a3b8; font-weight:800; margin-bottom:5px;">ROUTE</div>
+                    <div style="font-size:14px; color:#334155; margin-bottom:8px;"><i class="fa-solid fa-circle-dot" style="color:#10b981; margin-right:8px;"></i>${t.from_addr}</div>
+                    <div style="font-size:14px; color:#334155;"><i class="fa-solid fa-location-dot" style="color:#ef4444; margin-right:8px;"></i>${t.to_addr}</div>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:12px; color:#94a3b8; font-weight:800; margin-bottom:5px;">ITEMS DESCRIPTION</div>
+                    <div style="font-size:14px; color:#475569; background:#f1f5f9; padding:15px; border-radius:8px; line-height:1.5;">${t.items_desc}</div>
+                </div>
+            `;
+            document.getElementById('details-body').innerHTML = html;
+            document.getElementById('details-modal').style.display = 'flex';
+        }
+
         async function workflow(task_id, status, helper_id=null) {
             await fetch(`${API}/task/workflow`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_id, status, helper_id})});
             navigate('dashboard');
         }
 
-        // --- 发布任务 (带图片上传) ---
+        // --- 5. 发布任务 (Cloudinary 图片流上传) ---
         document.getElementById('v8-post-form').onsubmit = async e => {
-            e.preventDefault(); document.getElementById('loader').style.display='flex';
+            e.preventDefault(); 
+            // 如果地址栏提示请点击，说明还没打完两个点
+            if(document.getElementById('p_from').value === '' || document.getElementById('p_to').value === '') {
+                return alert('Please click 2 locations on the map (Pickup and Destination) first.');
+            }
+            
+            document.getElementById('loader').style.display='flex';
             const formData = new FormData();
             const dt = document.getElementById('p_dt').value.split('T');
             formData.append('publisher_id', user.student_id);
@@ -343,16 +441,18 @@
             formData.append('to_addr', document.getElementById('p_to').value);
             formData.append('reward', document.getElementById('p_reward').value);
             formData.append('load_weight', document.getElementById('p_weight').value);
+            formData.append('has_elevator', document.getElementById('p_elevator').checked ? 1 : 0);
             formData.append('items_desc', document.getElementById('p_items').value);
             
             const file = document.getElementById('p_file').files[0];
             if(file) formData.append('task_image', file);
             
             await fetch(`${API}/task/create`, {method:'POST', body:formData});
-            document.getElementById('loader').style.display='none'; navigate('home');
+            document.getElementById('loader').style.display='none'; 
+            navigate('home');
         };
 
-        // --- 完整资料卡 ---
+        // --- 6. 获取个人资料 ---
         async function loadProfile() {
             const r = await fetch(`${API}/user/profile`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})});
             const d = await r.json(); const u = d.user;
@@ -366,15 +466,14 @@
             document.getElementById('p-phone').innerText = u.phone;
         }
 
-        // --- ✉️ 验证码发送 ---
+        // --- 7. Auth: 邮箱验证与注册登录 ---
         async function sendCode() {
             const e = document.getElementById('r_email').value; 
             if(!e) return alert("Email is required first.");
-            alert("Code is being sent... please check your email or server logs.");
+            alert("Code is being sent... please check your email (or server terminal logs).");
             await fetch(`${API}/auth/send-code`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:e})}); 
         }
 
-        // --- 注册与登录 ---
         document.getElementById('r-form').onsubmit = async e => {
             e.preventDefault();
             const b = {
@@ -387,17 +486,28 @@
             };
             const r = await fetch(`${API}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
             const data = await r.json();
-            if(data.success) navigate('login'); else alert(data.message || 'Registration failed.');
+            if(data.success) {
+                alert("Registration successful! Please login.");
+                navigate('login'); 
+            } else {
+                alert(data.message || 'Registration failed.');
+            }
         };
 
         document.getElementById('l-form').onsubmit = async e => {
             e.preventDefault();
             const r = await fetch(`${API}/auth/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:document.getElementById('l_id').value, password:document.getElementById('l_pwd').value})});
             const d = await r.json();
-            if(d.success) { user=d.user; localStorage.setItem('user', JSON.stringify(user)); navigate('home'); } else alert('Invalid credentials');
+            if(d.success) { 
+                user=d.user; 
+                localStorage.setItem('user', JSON.stringify(user)); 
+                navigate('home'); 
+            } else {
+                alert('Invalid Student ID or Password');
+            }
         };
 
-        // --- 评价打分 ---
+        // --- 8. 评价打分 ---
         function openReview(id, hId) { curRevTask={id, hId}; document.getElementById('review-modal').style.display='flex'; }
         document.querySelectorAll('#star-box i').forEach(s => s.onclick = function(){
             curScore=this.dataset.v;
@@ -405,9 +515,11 @@
         });
         async function submitReview() {
             await fetch(`${API}/task/review`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_id:curRevTask.id, to_id:curRevTask.hId, score:curScore, comment: document.getElementById('rev-comment').value})});
-            document.getElementById('review-modal').style.display='none'; navigate('dashboard');
+            document.getElementById('review-modal').style.display='none'; 
+            navigate('dashboard');
         }
 
+        // 初始化
         navigate('home');
     </script>
 </body>
