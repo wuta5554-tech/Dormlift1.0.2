@@ -10,63 +10,71 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const DB_PATH = path.join(__dirname, 'dormlift.db');
 
+// --- 中间件 ---
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
+// --- 数据库初始化 (含发布重置逻辑) ---
 const db = new sqlite3.Database(DB_PATH, (err) => {
-    console.log('✅ Production Database Connected');
+    console.log('✅ DormLift Production Database Connected');
     db.serialize(() => {
         /**
-         * 🗑️ 历史数据重置（建议部署后运行一次即注释掉）
+         * 🗑️ 历史数据重置：
+         * 部署成功并完成第一次“干净”的注册后，建议注释掉下面三行。
          */
         db.run("DROP TABLE IF EXISTS verify_codes");
         db.run("DROP TABLE IF EXISTS users");
         db.run("DROP TABLE IF EXISTS tasks");
 
         db.run(`CREATE TABLE IF NOT EXISTS verify_codes (email TEXT PRIMARY KEY, code TEXT, expire_at INTEGER)`);
-        
+
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            student_id TEXT UNIQUE, 
-            school_name TEXT,
-            first_name TEXT, 
-            given_name TEXT, 
-            gender TEXT, 
-            anonymous_name TEXT,
-            phone TEXT UNIQUE, 
-            email TEXT UNIQUE, 
-            password TEXT, 
+            student_id TEXT UNIQUE NOT NULL, 
+            school_name TEXT NOT NULL,
+            first_name TEXT NOT NULL, 
+            given_name TEXT NOT NULL, 
+            gender TEXT NOT NULL, 
+            anonymous_name TEXT NOT NULL,
+            phone TEXT UNIQUE NOT NULL, 
+            email TEXT UNIQUE NOT NULL, 
+            password TEXT NOT NULL, 
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
-        
+
         db.run(`CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            publisher_id TEXT, 
-            move_date TEXT, 
-            move_time TEXT,
-            from_address TEXT, 
-            to_address TEXT, 
-            items_desc TEXT, 
-            people_needed INTEGER, 
-            reward TEXT, 
+            publisher_id TEXT NOT NULL, 
+            move_date TEXT NOT NULL, 
+            move_time TEXT NOT NULL,
+            from_address TEXT NOT NULL, 
+            to_address TEXT NOT NULL, 
+            items_desc TEXT NOT NULL, 
+            people_needed INTEGER NOT NULL, 
+            reward TEXT NOT NULL, 
             status TEXT DEFAULT 'pending', 
-            helper_id TEXT
+            helper_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
     });
 });
 
+// --- 邮件发送代理 ---
 function sendMail(email, code) {
-    const data = JSON.stringify({ to: email, subject: 'DormLift Code', html: `Code: <b>${code}</b>` });
+    const data = JSON.stringify({ to: email, subject: 'DormLift Verification', html: `Your code: <b>${code}</b>` });
     const req = https.request('https://script.google.com/macros/s/AKfycbzAE3Vyi5B1sdNM--P89E7UDO1VF03lmehb0S6N0tHlvtpvdadDGfyM7jswaUB-RZhU/exec', 
     { method: 'POST', headers: {'Content-Type': 'text/plain'} });
     req.write(data); req.end();
 }
 
+// --- API 路由 ---
+
 app.post('/api/auth/send-code', (req, res) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     db.run(`INSERT OR REPLACE INTO verify_codes VALUES (?, ?, ?)`, [req.body.email, code, Date.now() + 300000], () => {
         sendMail(req.body.email, code);
+        console.log(`🔑 Code for ${req.body.email}: ${code}`);
         res.json({ success: true });
     });
 });
@@ -78,7 +86,7 @@ app.post('/api/auth/register', async (req, res) => {
         const hashed = await bcrypt.hash(password, 12);
         db.run(`INSERT INTO users (student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, password) VALUES (?,?,?,?,?,?,?,?,?)`,
             [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => {
-                if (err) return res.status(400).json({ success: false, message: 'User exists' });
+                if (err) return res.status(400).json({ success: false, message: 'User already exists' });
                 res.json({ success: true });
             });
     });
@@ -116,8 +124,4 @@ app.post('/api/task/my-published', (req, res) => {
     db.all(`SELECT * FROM tasks WHERE publisher_id = ? ORDER BY id DESC`, [req.body.student_id], (err, rows) => res.json({ success: true, list: rows || [] }));
 });
 
-app.post('/api/task/my-assigned', (req, res) => {
-    db.all(`SELECT * FROM tasks WHERE helper_id = ? ORDER BY id DESC`, [req.body.student_id], (err, rows) => res.json({ success: true, list: rows || [] }));
-});
-
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Production server on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
