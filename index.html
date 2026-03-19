@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DormLift - Student Moving Hub</title>
+    <title>DormLift - Campus Moving Hub</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,7 +15,7 @@
         :root { --primary: #3498db; --bg: #f8f9fa; --text: #2c3e50; --card: #fff; --danger: #e74c3c; --success: #27ae60; --gray-btn: #a3a6aa; }
         body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
 
-        /* --- 导航栏：大气并排布局 --- */
+        /* --- 导航栏 --- */
         nav { 
             background: var(--card); padding: 20px 60px; 
             display: flex; justify-content: space-between; align-items: center; 
@@ -31,47 +31,50 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Home 视觉升级：白色阴影大卡片 --- */
-        .home-hero-container { display: flex; justify-content: center; align-items: center; min-height: 85vh; }
-        .home-hero-card { 
-            background: #fff; width: 1000px; padding: 80px 50px; border-radius: 25px; 
-            box-shadow: 0 15px 50px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; text-align: center;
-        }
-        .home-hero-card h1 { font-size: 48px; color: #1a252f; margin: 0 0 25px 0; font-weight: 800; }
-        .home-hero-card p { font-size: 20px; color: #666; max-width: 750px; margin: 0 auto 40px; line-height: 1.6; }
+        /* --- Home 布局：带视觉分隔的白色卡片 --- */
+        .home-hero-container { display: flex; flex-direction: column; align-items: center; min-height: 85vh; padding: 40px 0; }
         
-        /* 强制特性一排显示 */
-        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 60px; }
-        .feature-item { text-align: center; }
-        .feature-icon { 
-            width: 80px; height: 80px; background: #eaf6ff; color: var(--primary); border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; 
-            box-shadow: 0 4px 12px rgba(52,152,219,0.1); 
+        /* 上半部分：标题与按钮 */
+        .home-hero-card-top { 
+            background: #fff; width: 1000px; max-width: 95%; padding: 80px 50px 60px; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.01); border: 1px solid #f0f0f0; border-bottom: none; text-align: center;
         }
-        .feature-item h4 { font-size: 20px; margin-bottom: 12px; font-weight: 700; color: #333; }
-        .feature-item p { font-size: 15px; color: #7f8c8d; line-height: 1.5; margin: 0; }
+        .home-hero-card-top h1 { font-size: 48px; color: #1a252f; margin: 0 0 25px 0; font-weight: 800; }
+        .subtitle { font-size: 20px; color: #666; max-width: 750px; margin: 0 auto 40px; line-height: 1.6; }
 
-        /* --- Profile 资料卡片 --- */
+        /* 💡 视觉分隔带 */
+        .section-divider {
+            width: 1000px; max-width: 95%; height: 40px; background: #fff;
+            border-left: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0;
+            position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .section-divider::after {
+            content: ''; position: absolute; width: 90%; height: 1px;
+            background: linear-gradient(to right, rgba(224,224,224,0) 0%, rgba(224,224,224,1) 50%, rgba(224,224,224,0) 100%);
+        }
+
+        /* 下半部分：特性介绍 (强制一排) */
+        .home-hero-card-bottom {
+            background: #fff; width: 1000px; max-width: 95%; padding: 40px 50px 80px; border-radius: 0 0 25px 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; border-top: none;
+        }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; text-align: center; }
+        .f-icon { width: 80px; height: 80px; background: #eaf6ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; box-shadow: 0 4px 12px rgba(52,152,219,0.1); }
+
+        /* --- Profile 资料卡 --- */
         .profile-card { background: var(--card); padding: 50px; border-radius: 25px; display: flex; gap: 50px; align-items: center; box-shadow: 0 15px 40px rgba(0,0,0,0.05); margin-top: 40px; }
-        .profile-avatar { width: 120px; height: 120px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; font-weight: bold; }
+        .avatar-circle { width: 120px; height: 120px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; font-weight: bold; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; }
-        .info-item label { display: block; font-size: 11px; color: #95a5a6; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .info-item label { display: block; font-size: 11px; color: #95a5a6; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; }
         .info-item span { font-size: 18px; font-weight: 600; color: #2c3e50; }
 
         /* --- 按钮与表单 --- */
-        .btn { padding: 16px 40px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn { padding: 16px 40px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; font-size: 16px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white !important; }
         .btn-gray { background: var(--gray-btn); color: white !important; }
-        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
-
-        .form-box { background: var(--card); padding: 50px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.07); margin-top: 40px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .full-width { grid-column: span 2; }
-        .input-field { width: 100%; padding: 15px; border: 1.5px solid #eee; border-radius: 12px; font-size: 15px; box-sizing: border-box; }
-        .verification-group { background: #f4faff; padding: 25px; border-radius: 20px; border: 1px solid #e1f0ff; margin-bottom: 25px; }
-
-        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; margin-top: 30px; }
-        .task-card { background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; }
+        .input-field { width: 100%; padding: 15px; border: 1.5px solid #eee; border-radius: 12px; margin-bottom: 15px; font-size: 15px; box-sizing: border-box; }
+        
+        .task-card { background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; margin-top: 20px; }
         .badge { position: absolute; top: 25px; right: 25px; font-size: 11px; padding: 5px 14px; border-radius: 20px; background: #e1f0fa; color: var(--primary); font-weight: 800; text-transform: uppercase; }
     </style>
 </head>
@@ -83,70 +86,61 @@
 
     <div id="home" class="page active">
         <div class="home-hero-container">
-            <div class="home-hero-card">
+            <div class="home-hero-card-top">
                 <h1>Affordable Moving Help for University Students</h1>
-                <p>Connect with verified fellow students for reliable, flexible, and affordable campus moving assistance.</p>
-                <div style="display: flex; justify-content: center; gap: 25px; margin-bottom: 60px;">
+                <p class="subtitle">Connect with verified fellow students for reliable, flexible, and affordable campus moving assistance.</p>
+                <div style="display: flex; justify-content: center; gap: 20px;">
                     <button class="btn btn-primary" onclick="navigate('post-task')">Post a Moving Request</button>
                     <button class="btn btn-gray" onclick="navigate('find-tasks')">Become a Helper</button>
                 </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="home-hero-card-bottom">
                 <div class="features-grid">
                     <div class="feature-item">
-                        <div class="feature-icon"><i class="fa-solid fa-piggy-bank"></i></div>
-                        <h4>Low Cost</h4>
-                        <p>Cheaper than professional movers. Direct student pricing.</p>
+                        <div class="f-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <h4>Low Cost</h4><p>Cheaper than professional movers.</p>
                     </div>
                     <div class="feature-item">
-                        <div class="feature-icon"><i class="fa-solid fa-clock"></i></div>
-                        <h4>Flexible</h4>
-                        <p>Schedule help that fits your lectures and campus events.</p>
+                        <div class="f-icon"><i class="fa-solid fa-clock"></i></div>
+                        <h4>Flexible</h4><p>Fits your campus timetable.</p>
                     </div>
                     <div class="feature-item">
-                        <div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div>
-                        <h4>Trusted</h4>
-                        <p>Verified student network for a safe moving experience.</p>
+                        <div class="f-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <h4>Trusted</h4><p>Verified student-only network.</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="find-tasks" class="page">
-        <div class="container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin:50px 0 30px;">
-                <h2 style="font-size: 38px; margin:0;">🚚 Available Tasks</h2>
-                <button class="btn btn-gray" style="padding:12px 25px" onclick="loadTasks()"><i class="fa-solid fa-sync"></i> Refresh Hub</button>
-            </div>
-            <div class="task-grid" id="public-tasks"></div>
         </div>
     </div>
 
     <div class="container">
+        <div id="find-tasks" class="page">
+            <h2 style="margin:40px 0;">Available Moving Tasks</h2>
+            <div class="task-grid" id="public-tasks"></div>
+        </div>
+
         <div id="post-task" class="page">
-            <div class="form-box" style="max-width: 850px; margin: 0 auto;">
+            <div style="background:#fff; padding:50px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.05); max-width:850px; margin:40px auto;">
                 <h2 style="margin-top:0;">Create Request</h2>
-                <div id="map" style="height: 400px; border-radius: 20px; margin-bottom: 20px; z-index: 1;"></div>
-                <p id="dist" style="color:var(--primary); font-weight:800; font-size: 18px; min-height: 25px;"></p>
+                <div id="map" style="height:400px; border-radius:20px; margin-bottom:20px; border:1.5px solid #eee; z-index:1;"></div>
+                <p id="dist" style="color:var(--primary); font-weight:800; font-size:18px; min-height:25px;"></p>
                 <form id="task-form">
-                    <div class="form-grid">
-                        <div class="input-group"><label>DATE</label><input type="date" id="t_date" class="input-field" required></div>
-                        <div class="input-group"><label>TIME</label><input type="time" id="t_time" class="input-field" required></div>
-                        <div class="input-group"><label>FROM</label><input type="text" id="t_from" class="input-field" placeholder="Click map" required></div>
-                        <div class="input-group"><label>TO</label><input type="text" id="t_to" class="input-field" placeholder="Click map" required></div>
-                        <div class="input-group full-width"><label>ITEMS</label><textarea id="t_items" class="input-field" rows="3" required></textarea></div>
-                        <div class="input-group"><label>HELPERS</label><input type="number" id="t_people" class="input-field" value="1" required></div>
-                        <div class="input-group"><label>REWARD ($)</label><input type="text" id="t_reward" class="input-field" required></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">Publish Now</button>
+                    <div style="display:flex; gap:15px;"><input type="date" id="t_date" class="input-field" style="flex:1;" required><input type="time" id="t_time" class="input-field" style="flex:1;" required></div>
+                    <input type="text" id="t_from" placeholder="Pick From Address on Map" class="input-field" required>
+                    <input type="text" id="t_to" placeholder="Pick To Address on Map" class="input-field" required>
+                    <textarea id="t_items" placeholder="Items to move (e.g. 5 boxes)" class="input-field" rows="3" required></textarea>
+                    <div style="display:flex; gap:15px;"><input type="number" id="t_people" value="1" class="input-field" style="flex:1;" required><input type="text" id="t_reward" placeholder="Reward" class="input-field" style="flex:1;" required></div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Publish Request</button>
                 </form>
             </div>
         </div>
 
         <div id="profile" class="page">
             <div class="profile-card">
-                <div id="p-avatar" class="profile-avatar">?</div>
+                <div id="p-avatar" class="avatar-circle">?</div>
                 <div style="flex:1;">
-                    <h2 id="p-anon" style="font-size: 38px; margin:0 0 25px 0; color: var(--text);">Nickname</h2>
+                    <h2 id="p-anon" style="font-size: 38px; margin:0 0 25px 0;">Nickname</h2>
                     <div class="info-grid">
                         <div class="info-item"><label>Student ID</label><span id="p-id">-</span></div>
                         <div class="info-item"><label>University</label><span id="p-school">-</span></div>
@@ -157,45 +151,40 @@
                     </div>
                 </div>
             </div>
-            <h3 style="margin-top:60px; font-size: 28px;">My Published Tasks</h3><div class="task-grid" id="my-pub"></div>
-            <h3 style="margin-top:40px; font-size: 28px;">Tasks I Accepted</h3><div class="task-grid" id="my-ass"></div>
+            <h3 style="margin-top:60px; font-size:26px;">My Activity</h3>
+            <div id="my-pub"></div>
         </div>
 
         <div id="login" class="page">
-            <div class="form-box" style="max-width:440px; margin:80px auto; text-align:center;">
-                <h2>Welcome Back</h2>
+            <div style="background:#fff; padding:50px; border-radius:30px; max-width:400px; margin:80px auto; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+                <h2>Login</h2>
                 <form id="l-form">
-                    <input type="text" id="l_id" placeholder="Student ID" class="input-field" style="margin-bottom:20px;" required>
-                    <input type="password" id="l_pwd" placeholder="Password" class="input-field" style="margin-bottom:30px;" required>
+                    <input type="text" id="l_id" placeholder="Student ID" class="input-field" required>
+                    <input type="password" id="l_pwd" placeholder="Password" class="input-field" required>
                     <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
                 </form>
-                <p style="margin-top:25px; color:#666;">New? <a onclick="navigate('register')" style="color:var(--primary); font-weight:700; cursor:pointer;">Register Now</a></p>
+                <p style="margin-top:20px;">New? <a onclick="navigate('register')" style="color:var(--primary); cursor:pointer;">Register</a></p>
             </div>
         </div>
 
         <div id="register" class="page">
-            <div class="form-box" style="max-width:800px; margin:0 auto;">
-                <h2 style="text-align:center; font-size: 32px; margin-bottom: 30px;">Join the Hub</h2>
+            <div style="background:#fff; padding:50px; border-radius:30px; max-width:750px; margin:40px auto; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+                <h2 style="text-align:center;">Join DormLift</h2>
                 <form id="r-form">
-                    <div class="verification-group">
-                        <div class="input-grid" style="display:flex; gap:15px; align-items: flex-end;">
-                            <div style="flex:1;"><label style="font-size:11px; font-weight:800;">UNIVERSITY EMAIL</label><input type="email" id="r_email" class="input-field" placeholder="student@uni.nz" required></div>
-                            <button type="button" class="btn btn-gray" style="padding:14px 20px" onclick="sendCode()">Get Code</button>
-                        </div>
-                        <div style="margin-top:15px;"><label style="font-size:11px; font-weight:800;">CODE</label><input type="text" id="r_code" class="input-field" placeholder="6-digit code" required></div>
+                    <div style="display:flex; gap:10px; margin-bottom:20px;"><input type="email" id="r_email" placeholder="Campus Email" class="input-field" style="flex:1; margin-bottom:0;" required><button type="button" class="btn btn-gray" onclick="sendCode()">Get Code</button></div>
+                    <input type="text" id="r_code" placeholder="6-digit Code" class="input-field" required>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                        <input type="text" id="r_id" placeholder="Student ID" class="input-field" required>
+                        <input type="text" id="r_school" placeholder="University" class="input-field" required>
+                        <input type="password" id="r_pwd" placeholder="Password" class="input-field" required>
+                        <input type="password" id="r_conf" placeholder="Confirm Pwd" class="input-field" required>
+                        <input type="text" id="r_fname" placeholder="First Name" class="input-field" required>
+                        <input type="text" id="r_lname" placeholder="Last Name" class="input-field" required>
+                        <input type="text" id="r_phone" placeholder="Phone" class="input-field" required>
+                        <select id="r_gender" class="input-field"><option value="male">Male</option><option value="female">Female</option></select>
+                        <div style="grid-column: span 2;"><input type="text" id="r_anon" placeholder="Anonymous Nickname" class="input-field" required></div>
                     </div>
-                    <div class="form-grid">
-                        <div class="input-group"><label>Student ID</label><input type="text" id="r_id" class="input-field" required></div>
-                        <div class="input-group"><label>University</label><input type="text" id="r_school" class="input-field" required></div>
-                        <div class="input-group"><label>Password</label><input type="password" id="r_pwd" class="input-field" required></div>
-                        <div class="input-group"><label>Confirm Pwd</label><input type="password" id="r_conf" class="input-field" required></div>
-                        <div class="input-group"><label>First Name</label><input type="text" id="r_fname" class="input-field" required></div>
-                        <div class="input-group"><label>Last Name</label><input type="text" id="r_lname" class="input-field" required></div>
-                        <div class="input-group"><label>Phone</label><input type="text" id="r_phone" class="input-field" required></div>
-                        <div class="input-group"><label>Gender</label><select id="r_gender" class="input-field"><option value="male">Male</option><option value="female">Female</option></select></div>
-                        <div class="input-group full-width"><label>Anonymous Nickname (Displayed to others)</label><input type="text" id="r_anon" class="input-field" required></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:30px;">Register Account</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">Register Account</button>
                 </form>
             </div>
         </div>
@@ -205,11 +194,11 @@
         const API = '/api'; let user = JSON.parse(localStorage.getItem('user')) || null;
         
         function updateNav() {
-            const menu = document.getElementById('nav-menu');
-            const cur = document.querySelector('.page.active').id;
-            let common = `<a onclick="navigate('home')" class="${cur==='home'?'active-link':''}">Home</a><a onclick="navigate('find-tasks')" class="${cur==='find-tasks'?'active-link':''}">Find Tasks</a>`;
-            if (user) { menu.innerHTML = common + `<a onclick="navigate('post-task')" class="${cur==='post-task'?'active-link':''}">Post Task</a><a onclick="navigate('profile')" class="${cur==='profile'?'active-link':''}">My Profile</a><a onclick="logout()" style="color:var(--danger)">Logout</a>`; }
-            else { menu.innerHTML = common + `<a onclick="navigate('login')" class="${cur==='login'?'active-link':''}">Login</a><a onclick="navigate('register')" class="${cur==='register'?'active-link':''}">Register</a>`; }
+            const menu = document.getElementById('nav-menu'); const cur = document.querySelector('.page.active').id;
+            let h = `<a onclick="navigate('home')" class="${cur==='home'?'active-link':''}">Home</a><a onclick="navigate('find-tasks')" class="${cur==='find-tasks'?'active-link':''}">Find Tasks</a>`;
+            if (user) h += `<a onclick="navigate('post-task')" class="${cur==='post-task'?'active-link':''}">Post Task</a><a onclick="navigate('profile')" class="${cur==='profile'?'active-link':''}">My Profile</a><a onclick="logout()" style="color:var(--danger)">Logout</a>`;
+            else h += `<a onclick="navigate('login')" class="${cur==='login'?'active-link':''}">Login</a><a onclick="navigate('register')" class="${cur==='register'?'active-link':''}">Register</a>`;
+            menu.innerHTML = h;
         }
 
         function navigate(p) {
@@ -223,10 +212,10 @@
 
         let map=null, routing=null, markers=[], distVal="";
         async function getAddr(lat, lng) { const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`); const d = await r.json(); return d.display_name ? d.display_name.split(',').slice(0,3).join(',') : `${lat},${lng}`; }
+        
         function initMap() {
             if(map) { map.invalidateSize(); return; }
-            map = L.map('map').setView([-36.8509, 174.7645], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            map = L.map('map').setView([-36.8509, 174.7645], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             map.on('click', async e => {
                 if(markers.length>=2){ markers.forEach(m=>map.removeLayer(m)); markers=[]; if(routing) map.removeControl(routing); distVal=""; }
                 let m = L.marker(e.latlng).addTo(map); markers.push(m);
@@ -234,22 +223,21 @@
                 else if(markers.length===2) {
                     document.getElementById('t_to').value = await getAddr(e.latlng.lat, e.latlng.lng);
                     routing = L.Routing.control({ waypoints: [markers[0].getLatLng(), markers[1].getLatLng()], show:false, lineOptions: { styles: [{ color: '#3498db', weight: 6 }] } }).addTo(map);
-                    routing.on('routesfound', ev => { distVal = (ev.routes[0].summary.totalDistance/1000).toFixed(2) + " km"; document.getElementById('dist').innerText = "🚗 Estimated: " + distVal; });
+                    routing.on('routesfound', ev => { distVal = (ev.routes[0].summary.totalDistance/1000).toFixed(2) + " km"; document.getElementById('dist').innerText = "🚗 Route: " + distVal; });
                 }
             });
         }
 
         async function sendCode() {
-            const email = document.getElementById('r_email').value; if(!email) return alert("Email required");
-            await fetch(`${API}/auth/send-code`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email})});
-            alert("Sent!");
+            const e = document.getElementById('r_email').value; if(!e) return alert("Email required");
+            await fetch(`${API}/auth/send-code`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:e})}); alert("Code Sent!");
         }
 
         document.getElementById('r-form').onsubmit = async e => {
             e.preventDefault(); if(document.getElementById('r_pwd').value !== document.getElementById('r_conf').value) return alert("Pwd mismatch");
-            const data = { student_id:document.getElementById('r_id').value, school_name:document.getElementById('r_school').value, first_name:document.getElementById('r_fname').value, given_name:document.getElementById('r_lname').value, email:document.getElementById('r_email').value, code:document.getElementById('r_code').value, password:document.getElementById('r_pwd').value, phone:document.getElementById('r_phone').value, anonymous_name:document.getElementById('r_anon').value, gender:document.getElementById('r_gender').value };
-            const r = await fetch(`${API}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-            const d = await r.json(); if(d.success) navigate('login'); else alert(d.message);
+            const d = { student_id:document.getElementById('r_id').value, school_name:document.getElementById('r_school').value, first_name:document.getElementById('r_fname').value, given_name:document.getElementById('r_lname').value, email:document.getElementById('r_email').value, code:document.getElementById('r_code').value, password:document.getElementById('r_pwd').value, phone:document.getElementById('r_phone').value, anonymous_name:document.getElementById('r_anon').value, gender:document.getElementById('r_gender').value };
+            const r = await fetch(`${API}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)});
+            if((await r.json()).success) navigate('login'); else alert("Register Failed");
         };
 
         document.getElementById('l-form').onsubmit = async e => {
@@ -259,13 +247,13 @@
 
         async function loadTasks() {
             const r = await fetch(`${API}/task/list`); const d = await r.json();
-            document.getElementById('public-tasks').innerHTML = d.list.length ? d.list.map(t => createTaskCard(t, 'pub')).join('') : '<p style="text-align:center;color:#999;grid-column:1/-1;">No tasks yet.</p>';
+            document.getElementById('public-tasks').innerHTML = d.list.map(t => createTaskCard(t, 'pub')).join('') || '<p>No tasks yet.</p>';
         }
 
         document.getElementById('task-form').onsubmit = async e => {
             e.preventDefault();
-            const body = { publisher_id:user.student_id, move_date:document.getElementById('t_date').value, move_time:document.getElementById('t_time').value, from_address:document.getElementById('t_from').value, to_address:document.getElementById('t_to').value + (distVal?` (${distVal})`:""), items_desc:document.getElementById('t_items').value, people_needed:document.getElementById('t_people').value, reward:document.getElementById('t_reward').value };
-            await fetch(`${API}/task/create`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); navigate('find-tasks');
+            const b = { publisher_id:user.student_id, move_date:document.getElementById('t_date').value, move_time:document.getElementById('t_time').value, from_address:document.getElementById('t_from').value, to_address:document.getElementById('t_to').value + (distVal?` (${distVal})`:""), items_desc:document.getElementById('t_items').value, people_needed:document.getElementById('t_people').value, reward:document.getElementById('t_reward').value };
+            await fetch(`${API}/task/create`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)}); navigate('find-tasks');
         };
 
         async function acceptTask(id) { await fetch(`${API}/task/apply`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_id:id, helper_id:user.student_id})}); loadTasks(); }
@@ -280,15 +268,14 @@
                 document.getElementById('p-gender').innerText = u.gender.toUpperCase(); document.getElementById('p-email').innerText = u.email; document.getElementById('p-phone').innerText = u.phone;
             }
             fetch(`${API}/task/my-published`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})}).then(r=>r.json()).then(d=>document.getElementById('my-pub').innerHTML = d.list.map(t=>createTaskCard(t, 'mine')).join('') || '<p>None.</p>');
-            fetch(`${API}/task/my-assigned`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})}).then(r=>r.json()).then(d=>document.getElementById('my-ass').innerHTML = d.list.map(t=>createTaskCard(t, 'ass')).join('') || '<p>None.</p>');
         }
 
         function createTaskCard(t, mode) {
-            let b = (mode==='pub' && user && user.student_id !== t.publisher_id) ? `<button class="btn btn-primary" style="width:100%;margin-top:15px;padding:12px" onclick="acceptTask(${t.id})">Accept</button>` : '';
-            if (mode==='mine' && t.status==='pending') b = `<button class="btn" style="width:100%;background:var(--danger);color:white;margin-top:15px;padding:12px" onclick="cancelTask(${t.id})">Cancel</button>`;
-            return `<div class="task-card"><span class="badge">${t.status}</span><h3 style="margin:0 0 15px 0;">Moving Task</h3><p style="font-size:14px;"><i class="fa-solid fa-calendar"></i> ${t.move_date} ${t.move_time}</p><div style="background:#f9fafb;padding:15px;border-radius:10px;margin:15px 0;font-size:14px;"><b>From:</b> ${t.from_address}<br><b>To:</b> ${t.to_address}</div><p style="margin:0;">Reward: <b style="color:var(--success)">${t.reward}</b></p>${b}</div>`;
+            let b = (mode==='pub' && user && user.student_id !== t.publisher_id) ? `<button class="btn btn-primary" style="width:100%;margin-top:15px;padding:12px;" onclick="acceptTask(${t.id})">Accept Task</button>` : '';
+            if (mode==='mine' && t.status==='pending') b = `<button class="btn" style="width:100%;background:var(--danger);color:white;margin-top:15px;padding:12px;" onclick="cancelTask(${t.id})">Cancel</button>`;
+            return `<div class="task-card"><span class="badge">${t.status}</span><h3 style="margin:0 0 15px 0;">Moving Task</h3><p style="font-size:14px;"><i class="fa-solid fa-calendar"></i> ${t.move_date} ${t.move_time}</p><div style="background:#f9fafb;padding:15px;border-radius:10px;margin:15px 0;font-size:13px;"><b>From:</b> ${t.from_address}<br><b>To:</b> ${t.to_address}</div><p style="margin:0;">Reward: <b style="color:var(--success)">${t.reward}</b></p>${b}</div>`;
         }
-        updateNav(); navigate('home');
+        updateNav();
     </script>
 </body>
 </html>
