@@ -145,14 +145,16 @@ async function sendVerifyEmail(email, code) {
 
   try {
     let transporter = nodemailer.createTransport({
-      host: 'smtp-mail.outlook.com',
-      port: 587,
-      secure: false, // 587 端口必须为 false，使用 STARTTLS
-      requireTLS: true,
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // 465 端口专属，直接启用最高级别的 SSL 加密，永不卡死
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD
       },
+      connectionTimeout: 10000
+    });
+     }
       tls: {
         // 忽略可能导致云服务器握手失败的证书链校验
         rejectUnauthorized: false
