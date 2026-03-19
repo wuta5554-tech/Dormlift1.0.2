@@ -115,7 +115,7 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
-                <h2 style="margin:0;">Active Marketplace</h2>
+                <h2 style="margin:0;" id="marketplace-section">Active Marketplace</h2>
             </div>
             <div id="hall" class="task-grid"></div>
         </div>
@@ -229,10 +229,13 @@
         let user = JSON.parse(localStorage.getItem('user')) || null;
         let map=null, markers=[], curRevTask=null, curScore=5;
 
-        // --- 修复：完美的导航栏与拦截逻辑 ---
+        // --- 修复点：完美的导航栏渲染与拦截逻辑 ---
         function navigate(p) {
-            // 如果未登录，且企图访问受保护页面，拦截到 login
-            if(!user && ['dashboard', 'post-task', 'profile'].includes(p)) { p = 'login'; }
+            // 如果未登录，且点击了需要权限的页面，弹出提示并跳转登录
+            if(!user && ['dashboard', 'post-task', 'profile'].includes(p)) { 
+                alert("Please log in to access this feature.");
+                p = 'login'; 
+            }
             
             document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
             document.getElementById(p).classList.add('active');
@@ -246,23 +249,27 @@
 
         function updateNav() {
             const menu = document.getElementById('nav-menu');
-            // 修复点：未登录时，显示 Home 和 Login 按钮
+            // 无论是否登录，都在导航栏显示 Home, Post Task, Find Tasks
+            // 未登录显示 Login，已登录显示 Dashboard, Profile, Logout
             if(!user) {
                 menu.innerHTML = `
                     <a onclick="navigate('home')" class="${pAct('home')}">Home</a>
-                    <a onclick="navigate('login')" class="${pAct('login')}">Login / Register</a>
+                    <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post Task</a>
+                    <a onclick="document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'})">Find Tasks</a>
+                    <a onclick="navigate('login')" class="${pAct('login')}" style="color:var(--primary); font-weight:800;">Login</a>
                 `;
-                return;
+            } else {
+                menu.innerHTML = `
+                    <a onclick="navigate('home')" class="${pAct('home')}">Home</a>
+                    <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post Task</a>
+                    <a onclick="document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'})">Find Tasks</a>
+                    <a onclick="navigate('dashboard')" class="${pAct('dashboard')}">Dashboard</a>
+                    <a onclick="navigate('profile')" class="${pAct('profile')}">My Profile</a>
+                    <a onclick="logout()" style="color:var(--danger)">Logout</a>
+                `;
             }
-            // 登录后显示全功能
-            menu.innerHTML = `
-                <a onclick="navigate('home')" class="${pAct('home')}">Market</a>
-                <a onclick="navigate('dashboard')" class="${pAct('dashboard')}">Dashboard</a>
-                <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post</a>
-                <a onclick="navigate('profile')" class="${pAct('profile')}">Profile</a>
-                <a onclick="logout()" style="color:var(--danger)">Logout</a>
-            `;
         }
+        
         const pAct = (id) => document.getElementById(id).classList.contains('active') ? 'active-link' : '';
         function logout() { localStorage.clear(); location.reload(); }
 
@@ -280,7 +287,7 @@
             });
         }
 
-        // --- 渲染大厅任务（附带空状态） ---
+        // --- 渲染大厅任务 ---
         async function loadHall() {
             const r = await fetch(`${API}/task/all`); const d = await r.json();
             const hall = document.getElementById('hall');
