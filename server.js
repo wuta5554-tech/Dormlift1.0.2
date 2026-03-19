@@ -60,12 +60,12 @@ app.use((req, res, next) => {
 // ==============================================
 // 静态文件与页面路由
 // ==============================================
-// 1. 当用户访问根目录时，返回 index.html 页面
+// 当用户访问根目录时，返回 index.html 页面
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 2. 健康检查接口，用于查看后端状态
+// 健康检查接口，用于查看后端状态
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'running',
@@ -135,7 +135,7 @@ function maskEmail(email) {
 }
 
 // ==============================================
-// 邮件发送（最终防卡死、防拒收版本）
+// 邮件发送（全面改用 Gmail SMTP，稳定防拦截）
 // ==============================================
 async function sendVerifyEmail(email, code) {
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
@@ -145,21 +145,13 @@ async function sendVerifyEmail(email, code) {
 
   try {
     let transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
+      host: 'smtp.gmail.com', // 换用 Gmail
       port: 465,
-      secure: true, // 465 端口专属，直接启用最高级别的 SSL 加密，永不卡死
+      secure: true, // 465 端口专属，直接启用最高级别的 SSL 加密
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD
       },
-      connectionTimeout: 10000
-    });
-     }
-      tls: {
-        // 忽略可能导致云服务器握手失败的证书链校验
-        rejectUnauthorized: false
-      },
-      // 10秒超时控制，绝生死等
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000
@@ -167,7 +159,7 @@ async function sendVerifyEmail(email, code) {
 
     await transporter.sendMail({
       from: `"DormLift Official" <${process.env.SMTP_EMAIL}>`,
-      to: email,
+      to: email, // 发给学生注册时填的任何邮箱（包括 Outlook）
       subject: 'Your DormLift Verification Code',
       text: `Your verification code is: ${code}\nValid for 5 minutes.\nDo not share it with others.`,
       html: `
