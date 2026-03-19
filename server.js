@@ -45,11 +45,10 @@ app.use((req, res, next) => {
 // ==============================================
 // 静态文件路由
 // ==============================================
-// 让 Express 提供根目录下的静态文件 (如 index.html)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
-app.get('/api/health', (req, res) => { res.status(200).json({ status: 'running', service: 'DormLift', version: '2.5.0 (Full UI)', port: PORT }); });
+app.get('/api/health', (req, res) => { res.status(200).json({ status: 'running', service: 'DormLift', version: '3.0.0 (Ultimate)', port: PORT }); });
 
 // ==============================================
 // 工具函数
@@ -145,8 +144,9 @@ function initDatabase() {
 }
 
 // ==============================================
-// 路由接口
+// 路由接口 (全 10 个接口，一个不少)
 // ==============================================
+
 app.post('/api/auth/send-code', async (req, res) => {
   try {
     const { email } = req.body;
@@ -203,6 +203,15 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+app.post('/api/user/profile', (req, res) => {
+  const { student_id } = req.body;
+  db.get(`SELECT * FROM users WHERE student_id = ?`, [student_id], (err, user) => {
+    if (err || !user) return res.status(400).json({ success: false });
+    delete user.password;
+    res.json({ success: true, user });
+  });
+});
+
 app.get('/api/task/list', (req, res) => {
   db.all(`SELECT tasks.*, users.anonymous_name as publisher_name FROM tasks LEFT JOIN users ON tasks.publisher_id = users.student_id WHERE tasks.status = 'pending' ORDER BY tasks.created_at DESC`, [], (err, rows) => {
     if (err) return res.status(500).json({ success: false });
@@ -227,6 +236,14 @@ app.post('/api/task/apply', (req, res) => {
       if (err || this.changes === 0) return res.status(400).json({ success: false, message: 'Apply failed' });
       res.json({ success: true, message: 'Task accepted' });
     });
+});
+
+app.post('/api/task/cancel', (req, res) => {
+  db.run(`UPDATE tasks SET status = 'cancelled' WHERE id = ?`, [req.body.task_id], function(err) {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, message: 'Task cancelled' });
+    }
+  );
 });
 
 app.post('/api/task/my-published', (req, res) => {
