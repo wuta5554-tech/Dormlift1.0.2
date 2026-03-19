@@ -133,7 +133,8 @@ function sendVerifyEmail(email, code) {
 }
 
 // ==============================================
-// 数据库初始化
+// ==============================================
+// 数据库初始化 (开发期终极重置版)
 // ==============================================
 function initDatabase() {
   db = new sqlite3.Database(DB_PATH, (err) => {
@@ -141,15 +142,26 @@ function initDatabase() {
     console.log('Database connected at:', DB_PATH);
 
     db.exec(`
-      PRAGMA foreign_keys = ON;
+      -- 1. 先关闭外键约束，防止删表时报错
+      PRAGMA foreign_keys = OFF;
+      
+      -- 2. 💥 彻底清空所有旧表（开发期专属操作，保证不留残余）
+      DROP TABLE IF EXISTS task_applications;
+      DROP TABLE IF EXISTS tasks;
       DROP TABLE IF EXISTS users;
-      -- ✅ 新增：验证码专用表（不怕重启了！）
+      DROP TABLE IF EXISTS verify_codes;
+
+      -- 3. 重新开启外键约束，恢复安全保护
+      PRAGMA foreign_keys = ON;
+
+      -- 4. 重建全新的验证码表
       CREATE TABLE IF NOT EXISTS verify_codes (
         email TEXT PRIMARY KEY,
         code TEXT NOT NULL,
         expire_at INTEGER NOT NULL
       );
 
+      -- 5. 重建带有 email 列的完美用户表
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id TEXT UNIQUE NOT NULL,
@@ -163,6 +175,8 @@ function initDatabase() {
         status TEXT DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- 6. 重建任务表
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         publisher_id TEXT NOT NULL,
@@ -181,13 +195,12 @@ function initDatabase() {
     `, (err) => {
       if (err) console.error('Create tables error:', err.message);
       else {
-        console.log('All tables initialized successfully');
+        console.log('✅ All tables initialized successfully (Clean Reset!)');
         isDbReady = true;
       }
     });
   });
 }
-
 // ==============================================
 // 路由接口
 // ==============================================
