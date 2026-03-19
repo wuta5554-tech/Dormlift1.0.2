@@ -142,7 +142,7 @@ function initDatabase() {
 
     db.exec(`
       PRAGMA foreign_keys = ON;
-      
+      DROP TABLE IF EXISTS users;
       -- ✅ 新增：验证码专用表（不怕重启了！）
       CREATE TABLE IF NOT EXISTS verify_codes (
         email TEXT PRIMARY KEY,
