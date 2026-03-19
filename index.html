@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DormLift Pro V8.0 - Complete Edition</title>
+    <title>DormLift Pro V9.0 - Complete Edition</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -77,7 +77,7 @@
 </head>
 <body>
 
-    <div id="loader"><i class="fa-solid fa-spinner fa-spin fa-3x" style="color:var(--primary)"></i><p style="margin-top:20px; font-weight:700; color:#334155;">Uploading Photo to Cloud...</p></div>
+    <div id="loader"><i class="fa-solid fa-spinner fa-spin fa-3x" style="color:var(--primary)"></i><p style="margin-top:20px; font-weight:700; color:#334155;">Processing...</p></div>
 
     <nav>
         <div class="logo" onclick="navigate('home')">DormLift</div>
@@ -97,21 +97,9 @@
             </div>
 
             <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-piggy-bank"></i></div>
-                    <h3 style="margin:0 0 10px 0;">Low Cost</h3>
-                    <p style="color:#657786; font-size:14px; line-height:1.5; margin:0;">Save money by hiring fellow students instead of professional movers.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                    <h3 style="margin:0 0 10px 0;">Flexible</h3>
-                    <p style="color:#657786; font-size:14px; line-height:1.5; margin:0;">Schedule help that perfectly fits your busy campus timetable.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div>
-                    <h3 style="margin:0 0 10px 0;">Trusted</h3>
-                    <p style="color:#657786; font-size:14px; line-height:1.5; margin:0;">A verified student-only network for total peace of mind.</p>
-                </div>
+                <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-piggy-bank"></i></div><h3>Low Cost</h3><p style="color:#657786; font-size:14px;">Save money by hiring fellow students.</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div><h3>Flexible</h3><p style="color:#657786; font-size:14px;">Schedule help that fits your timetable.</p></div>
+                <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div><h3>Trusted</h3><p style="color:#657786; font-size:14px;">A verified student-only network.</p></div>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
@@ -194,18 +182,24 @@
             <div class="form-box">
                 <h2 style="text-align:center; margin-top:0; margin-bottom:30px;">Join the Community</h2>
                 <form id="r-form">
+                    
+                    <div style="background:#f4faff; padding:25px; border-radius:15px; margin-bottom:25px; border:1px solid #e1f0ff;">
+                        <input type="email" id="r_email" placeholder="Campus Email" class="input-pro" required>
+                        <div style="display:flex; gap:12px;">
+                            <input type="text" id="r_code" placeholder="6-digit verification code" class="input-pro" style="margin:0;" required>
+                            <button type="button" class="btn btn-primary" style="padding:10px 25px; height:48px;" onclick="sendCode()">Get Code</button>
+                        </div>
+                    </div>
+
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                         <input type="text" id="r_id" placeholder="Student ID" class="input-pro" required>
                         <input type="text" id="r_school" placeholder="University Name" class="input-pro" required>
                         <input type="password" id="r_pwd" placeholder="Password" class="input-pro" required>
-                        <input type="email" id="r_email" placeholder="Campus Email" class="input-pro" required>
+                        <input type="text" id="r_phone" placeholder="Phone Number" class="input-pro" required>
                         <input type="text" id="r_fname" placeholder="First Name (Real)" class="input-pro" required>
                         <input type="text" id="r_lname" placeholder="Last Name (Real)" class="input-pro" required>
-                        <input type="text" id="r_phone" placeholder="Phone Number" class="input-pro" required>
                         <select id="r_gender" class="input-pro"><option value="Male">Male</option><option value="Female">Female</option></select>
-                        <div style="grid-column: span 2;">
-                            <input type="text" id="r_anon" placeholder="Anonymous Nickname (Display to others)" class="input-pro" style="margin-bottom:0;" required>
-                        </div>
+                        <input type="text" id="r_anon" placeholder="Anonymous Nickname" class="input-pro" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width:100%; margin-top:25px; padding:16px;">Register Account</button>
                 </form>
@@ -229,14 +223,12 @@
         let user = JSON.parse(localStorage.getItem('user')) || null;
         let map=null, markers=[], curRevTask=null, curScore=5;
 
-        // --- 修复点：完美的导航栏渲染与拦截逻辑 ---
+        // --- 导航逻辑与权限拦截 ---
         function navigate(p) {
-            // 如果未登录，且点击了需要权限的页面，弹出提示并跳转登录
             if(!user && ['dashboard', 'post-task', 'profile'].includes(p)) { 
                 alert("Please log in to access this feature.");
                 p = 'login'; 
             }
-            
             document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
             document.getElementById(p).classList.add('active');
             updateNav();
@@ -249,20 +241,18 @@
 
         function updateNav() {
             const menu = document.getElementById('nav-menu');
-            // 无论是否登录，都在导航栏显示 Home, Post Task, Find Tasks
-            // 未登录显示 Login，已登录显示 Dashboard, Profile, Logout
             if(!user) {
                 menu.innerHTML = `
                     <a onclick="navigate('home')" class="${pAct('home')}">Home</a>
                     <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post Task</a>
-                    <a onclick="document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'})">Find Tasks</a>
+                    <a onclick="navigate('home'); setTimeout(() => document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'}), 100);">Find Tasks</a>
                     <a onclick="navigate('login')" class="${pAct('login')}" style="color:var(--primary); font-weight:800;">Login</a>
                 `;
             } else {
                 menu.innerHTML = `
                     <a onclick="navigate('home')" class="${pAct('home')}">Home</a>
                     <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post Task</a>
-                    <a onclick="document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'})">Find Tasks</a>
+                    <a onclick="navigate('home'); setTimeout(() => document.getElementById('marketplace-section').scrollIntoView({behavior: 'smooth'}), 100);">Find Tasks</a>
                     <a onclick="navigate('dashboard')" class="${pAct('dashboard')}">Dashboard</a>
                     <a onclick="navigate('profile')" class="${pAct('profile')}">My Profile</a>
                     <a onclick="logout()" style="color:var(--danger)">Logout</a>
@@ -287,7 +277,7 @@
             });
         }
 
-        // --- 渲染大厅任务 ---
+        // --- 渲染大厅 ---
         async function loadHall() {
             const r = await fetch(`${API}/task/all`); const d = await r.json();
             const hall = document.getElementById('hall');
@@ -342,7 +332,7 @@
             navigate('dashboard');
         }
 
-        // --- 发布任务 (Cloudinary 真实上传) ---
+        // --- 发布任务 (带图片上传) ---
         document.getElementById('v8-post-form').onsubmit = async e => {
             e.preventDefault(); document.getElementById('loader').style.display='flex';
             const formData = new FormData();
@@ -362,7 +352,7 @@
             document.getElementById('loader').style.display='none'; navigate('home');
         };
 
-        // --- 全量个人资料 ---
+        // --- 完整资料卡 ---
         async function loadProfile() {
             const r = await fetch(`${API}/user/profile`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})});
             const d = await r.json(); const u = d.user;
@@ -376,18 +366,28 @@
             document.getElementById('p-phone').innerText = u.phone;
         }
 
-        // --- 登录与注册 ---
+        // --- ✉️ 验证码发送 ---
+        async function sendCode() {
+            const e = document.getElementById('r_email').value; 
+            if(!e) return alert("Email is required first.");
+            alert("Code is being sent... please check your email or server logs.");
+            await fetch(`${API}/auth/send-code`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:e})}); 
+        }
+
+        // --- 注册与登录 ---
         document.getElementById('r-form').onsubmit = async e => {
             e.preventDefault();
             const b = {
                 student_id: document.getElementById('r_id').value, school_name: document.getElementById('r_school').value,
                 password: document.getElementById('r_pwd').value, email: document.getElementById('r_email').value,
+                code: document.getElementById('r_code').value, 
                 first_name: document.getElementById('r_fname').value, given_name: document.getElementById('r_lname').value,
                 phone: document.getElementById('r_phone').value, gender: document.getElementById('r_gender').value,
                 anonymous_name: document.getElementById('r_anon').value
             };
             const r = await fetch(`${API}/auth/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
-            if((await r.json()).success) navigate('login'); else alert('Registration failed. ID or email exists.');
+            const data = await r.json();
+            if(data.success) navigate('login'); else alert(data.message || 'Registration failed.');
         };
 
         document.getElementById('l-form').onsubmit = async e => {
