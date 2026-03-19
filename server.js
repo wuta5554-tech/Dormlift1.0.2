@@ -58,9 +58,15 @@ app.use((req, res, next) => {
 });
 
 // ==============================================
-// 健康检查（必须优先，保证部署成功）
+// 静态文件与页面路由
 // ==============================================
+// 1. 当用户访问根目录时，返回 index.html 页面
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 2. 把原来的健康检查接口移到 /api/health，方便你随时查看后端状态
+app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'running',
     service: 'DormLift Ultimate Backend',
