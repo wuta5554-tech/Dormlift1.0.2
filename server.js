@@ -6,12 +6,13 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const https = require('https'); // ✉️ 恢复 HTTPS 模块用于发邮件
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const DB_PATH = path.join(__dirname, 'dormlift_v8.db');
+const DB_PATH = path.join(__dirname, 'dormlift_v9.db');
 
-// --- 1. Cloudinary 配置 (你的凭据) ---
+// --- 1. Cloudinary 配置 ---
 cloudinary.config({ 
   cloud_name: 'ddlbhkmwb', 
   api_key: '659513524184184', 
@@ -21,7 +22,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'dormlift_v8',
+    folder: 'dormlift_v9',
     allowed_formats: ['jpg', 'png', 'jpeg'],
     public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
   },
@@ -32,39 +33,60 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// --- 2. 数据库初始化 (确保 100% 字段对齐) ---
+// --- 2. 数据库初始化 (恢复验证码表) ---
 const db = new sqlite3.Database(DB_PATH, () => {
     db.serialize(() => {
-        db.run("DROP TABLE IF EXISTS users");
-        db.run("DROP TABLE IF EXISTS tasks");
-        db.run("DROP TABLE IF EXISTS reviews");
+        db.run("DROP TABLE IF EXISTS verify_codes");
+        db.run("CREATE TABLE verify_codes (email TEXT PRIMARY KEY, code TEXT, expire_at INTEGER)");
 
-        db.run(`CREATE TABLE users (
+        db.run(`CREATE TABLE IF NOT EXISTS users (
             student_id TEXT PRIMARY KEY, school_name TEXT, first_name TEXT, given_name TEXT, 
             gender TEXT, anonymous_name TEXT, phone TEXT, email TEXT, password TEXT,
             rating_avg REAL DEFAULT 5.0, task_count INTEGER DEFAULT 0
         )`);
 
-        db.run(`CREATE TABLE tasks (
+        db.run(`CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT, publisher_id TEXT, helper_id TEXT,
             move_date TEXT, move_time TEXT, from_addr TEXT, to_addr TEXT, 
             items_desc TEXT, reward TEXT, has_elevator INTEGER, load_weight TEXT, 
             img_url TEXT, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        db.run(`CREATE TABLE reviews (
+        db.run(`CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, from_id TEXT, to_id TEXT, score INTEGER, comment TEXT
         )`);
     });
 });
 
-// --- 3. 核心 API ---
+// --- ✉️ 3. 邮件发送服务 ---
+function sendMail(email, code) {
+    const data = JSON.stringify({ to: email, subject: 'DormLift Verification', html: `Your code is: <b>${code}</b>` });
+    const req = https.request('https://script.google.com/macros/s/AKfycbzAE3Vyi5B1sdNM--P89E7UDO1VF03lmehb0S6N0tHlvtpvdadDGfyM7jswaUB-RZhU/exec', 
+    { method: 'POST', headers: {'Content-Type': 'text/plain'} });
+    req.on('error', (e) => console.error("Mail Error:", e.message));
+    req.write(data); req.end();
+}
 
+app.post('/api/auth/send-code', (req, res) => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    db.run(`INSERT OR REPLACE INTO verify_codes VALUES (?, ?, ?)`, [req.body.email, code, Date.now() + 300000], () => {
+        sendMail(req.body.email, code);
+        console.log(`🔑 Verification Code for ${req.body.email}: ${code}`);
+        res.json({ success: true });
+    });
+});
+
+// --- 4. 核心 API (注册引入验证码校验) ---
 app.post('/api/auth/register', async (req, res) => {
-    const { student_id, email, password, school_name, first_name, given_name, gender, anonymous_name, phone } = req.body;
-    const hashed = await bcrypt.hash(password, 10);
-    db.run(`INSERT INTO users (student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, password) VALUES (?,?,?,?,?,?,?,?,?)`,
-        [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => res.json({ success: !err }));
+    const { student_id, email, code, password, school_name, first_name, given_name, gender, anonymous_name, phone } = req.body;
+    db.get(`SELECT * FROM verify_codes WHERE email = ?`, [email], async (err, row) => {
+        if (!row || row.code !== code || Date.now() > row.expire_at) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired code' });
+        }
+        const hashed = await bcrypt.hash(password, 10);
+        db.run(`INSERT INTO users (student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, password) VALUES (?,?,?,?,?,?,?,?,?)`,
+            [student_id, school_name, first_name, given_name, gender, anonymous_name, phone, email, hashed], (err) => res.json({ success: !err }));
+    });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -92,6 +114,15 @@ app.post('/api/task/workflow', (req, res) => {
     db.run(sql, params, () => res.json({ success: true }));
 });
 
+app.post('/api/task/review', (req, res) => {
+    const { task_id, to_id, score, comment } = req.body;
+    db.serialize(() => {
+        db.run(`UPDATE tasks SET status = 'reviewed' WHERE id = ?`, [task_id]);
+        db.run(`UPDATE users SET task_count = task_count + 1, rating_avg = (rating_avg * task_count + ?) / (task_count + 1) WHERE student_id = ?`, [score, to_id]);
+        res.json({ success: true });
+    });
+});
+
 app.post('/api/user/profile', (req, res) => {
     db.get(`SELECT * FROM users WHERE student_id = ?`, [req.body.student_id], (err, row) => res.json({ success: true, user: row }));
 });
@@ -100,4 +131,4 @@ app.post('/api/user/dashboard', (req, res) => {
     db.all(`SELECT * FROM tasks WHERE publisher_id = ? OR helper_id = ? ORDER BY id DESC`, [req.body.student_id, req.body.student_id], (err, rows) => res.json({ success: true, list: rows || [] }));
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 V8.0 Final Engine Active on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 V9.0 Full Engine Active on ${PORT}`));
