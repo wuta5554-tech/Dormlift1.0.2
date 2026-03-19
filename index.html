@@ -3,97 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DormLift V5.0 - Ultimate Campus Moving</title>
+    <title>DormLift Pro V8.0 - Final Edition</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        :root { --primary: #3498db; --bg: #f4f7f9; --text: #2c3e50; --card: #fff; --border: #e1e8ed; --success: #27ae60; --danger: #e74c3c; }
+        :root { --primary: #3498db; --bg: #f4f7f9; --text: #2c3e50; --card: #fff; --border: #e1e8ed; --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; }
         body { margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
         nav { background: var(--card); padding: 15px 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; }
         .logo { font-size: 24px; font-weight: 800; color: var(--primary); cursor: pointer; }
-        .nav-links { display: flex; gap: 30px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #657786; font-weight: 600; cursor: pointer; font-size: 15px; }
-        .active-link { color: var(--primary) !important; }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #657786; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .active-link { color: var(--primary) !important; border-bottom: 2px solid var(--primary); }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .page { display: none; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 仪表盘 Dashboard --- */
+        /* 仪表盘分栏 */
         .dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
         .dash-col { background: #ebf0f4; padding: 15px; border-radius: 12px; min-height: 600px; }
-        .pro-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
-        .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 800; }
+        .dash-col h4 { margin: 0 0 15px 10px; color: #657786; font-size: 14px; text-transform: uppercase; }
 
-        /* --- 地图与表单 --- */
-        #map { height: 300px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .form-box { background: white; padding: 40px; border-radius: 20px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; }
-        .input-pro { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; font-size: 14px; }
-        .file-input-label { display: block; background: #f8f9fa; border: 2px dashed #ddd; padding: 20px; text-align: center; cursor: pointer; border-radius: 8px; color: #657786; margin-bottom: 15px; }
+        /* 任务卡片 */
+        .pro-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); transition: 0.3s; position: relative; }
+        .task-img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 12px; background: #eee; }
+        .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 800; position: absolute; top: 15px; right: 15px; }
         
-        /* --- Profile 资料卡 --- */
-        .profile-card { background: white; padding: 40px; border-radius: 20px; border: 1px solid var(--border); display: flex; gap: 40px; align-items: center; }
-        .avatar { width: 100px; height: 100px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
-        .info-item label { display: block; font-size: 11px; color: #aab8c2; font-weight: 800; margin-bottom: 5px; }
+        /* 表单与地图 */
+        .form-box { background: white; padding: 40px; border-radius: 20px; border: 1px solid var(--border); max-width: 750px; margin: 0 auto; }
+        #map { height: 320px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .input-pro { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; margin-bottom: 12px; font-size: 14px; }
+        .file-label { display: block; background: #f8f9fa; border: 2px dashed #ddd; padding: 25px; text-align: center; cursor: pointer; border-radius: 10px; margin-bottom: 15px; }
 
-        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        /* 资料卡 */
+        .profile-card { background: white; padding: 45px; border-radius: 20px; border: 1px solid var(--border); display: flex; gap: 40px; align-items: center; }
+        .avatar { width: 110px; height: 110px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; }
+        .info-item label { display: block; font-size: 11px; color: #aab8c2; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; }
+        .info-item span { font-weight: 600; font-size: 16px; color: var(--text); }
+
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 400px; text-align: center; }
+        .btn-ghost { background: #f4f7f9; color: var(--text); margin-top: 10px; }
+
+        /* 评价系统 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 35px; border-radius: 25px; width: 400px; text-align: center; }
+        .stars { font-size: 32px; color: #ddd; margin: 20px 0; cursor: pointer; }
+        .stars .active { color: var(--warning); }
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
+    <div id="loader"><i class="fa-solid fa-spinner fa-spin fa-3x" style="color:var(--primary)"></i><p style="margin-top:15px; font-weight:700;">Uploading to Cloudinary...</p></div>
+
     <nav>
-        <div class="logo" onclick="navigate('home')">DormLift <span style="font-size: 10px; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px;">V5.0</span></div>
+        <div class="logo" onclick="navigate('home')">DormLift <span style="font-size: 10px; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px;">V8.0 PRO</span></div>
         <div class="nav-links" id="nav-menu"></div>
     </nav>
 
     <div class="container">
         <div id="home" class="page active">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2>Task Marketplace</h2>
+                <h2 style="letter-spacing:-1px;">Active Marketplace</h2>
                 <button class="btn btn-primary" style="width:auto" onclick="navigate('post-task')">+ Create Request</button>
             </div>
             <div id="hall" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;"></div>
         </div>
 
         <div id="dashboard" class="page">
-            <h2>Process Tracking</h2>
+            <h2 style="letter-spacing:-1px;">My Task Workflow</h2>
             <div class="dash-grid">
-                <div class="dash-col" id="col-pending"><h4>Pending</h4></div>
-                <div class="dash-col" id="col-progress"><h4>Moving</h4></div>
-                <div class="dash-col" id="col-finished"><h4>Completed</h4></div>
+                <div class="dash-col" id="col-pending"><h4>Pending ⏳</h4></div>
+                <div class="dash-col" id="col-progress"><h4>Moving 🚚</h4></div>
+                <div class="dash-col" id="col-finished"><h4>Completed ✅</h4></div>
             </div>
         </div>
 
         <div id="post-task" class="page">
             <div class="form-box">
-                <h3 style="margin-top:0">Post New Move</h3>
-                <div id="map"></div> <form id="v5-post-form">
-                    <div style="display:flex; gap:10px">
-                        <input type="text" id="p_from" placeholder="Pick start on map" class="input-pro" required>
-                        <input type="text" id="p_to" placeholder="Pick end on map" class="input-pro" required>
+                <h3 style="margin-top:0">Post New Request</h3>
+                <div id="map"></div>
+                <form id="v8-post-form">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <input type="text" id="p_from" placeholder="Pickup (Click Map)" class="input-pro" required>
+                        <input type="text" id="p_to" placeholder="Destination (Click Map)" class="input-pro" required>
                     </div>
-                    <div style="display:flex; gap:10px">
-                        <input type="datetime-local" id="p_datetime" class="input-pro" required> <input type="text" id="p_reward" placeholder="Reward $" class="input-pro" required>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <input type="datetime-local" id="p_dt" class="input-pro" required>
+                        <input type="text" id="p_reward" placeholder="Reward (e.g. $50)" class="input-pro" required>
                     </div>
-                    <label class="file-input-label" for="p_img">
-                        <i class="fa-solid fa-camera"></i> <span id="img-name-display">Upload Items Photo (Optional)</span>
-                        <input type="file" id="p_img" style="display:none" onchange="updateFileName(this)">
+                    <label class="file-label">
+                        <i class="fa-solid fa-camera"></i> <span id="file-display">Attach Photo for Helper</span>
+                        <input type="file" id="p_file" accept="image/*" style="display:none" onchange="document.getElementById('file-display').innerText=this.files[0].name">
                     </label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                        <select id="p_weight" class="input-pro"><option value="Light">Light Move</option><option value="Heavy">Heavy Move</option></select>
-                        <label style="font-size:14px"><input type="checkbox" id="p_elevator"> Elevator Available</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <select id="p_weight" class="input-pro"><option value="Light">Light Move</option><option value="Heavy">Heavy Furniture</option></select>
+                        <label style="padding:10px; font-size:14px;"><input type="checkbox" id="p_elevator"> Elevator Available</label>
                     </div>
-                    <textarea id="p_items" placeholder="List your boxes, furniture, etc." class="input-pro" rows="3"></textarea>
-                    <button type="submit" class="btn btn-primary">Publish to Marketplace</button>
+                    <textarea id="p_items" placeholder="List items (e.g. 5 boxes, 1 chair)" class="input-pro" rows="3"></textarea>
+                    <button type="submit" class="btn btn-primary">Publish Request</button>
                 </form>
             </div>
         </div>
@@ -102,7 +117,7 @@
             <div class="profile-card">
                 <div id="p-avatar" class="avatar">?</div>
                 <div style="flex:1">
-                    <h2 id="p-anon" style="margin:0 0 20px 0; font-size:36px;">Nickname</h2>
+                    <h2 id="p-anon" style="margin:0 0 25px 0; font-size:38px;">-</h2>
                     <div class="info-grid">
                         <div class="info-item"><label>Student ID</label><span id="p-id">-</span></div>
                         <div class="info-item"><label>University</label><span id="p-school">-</span></div>
@@ -115,85 +130,96 @@
             </div>
         </div>
 
-        <div id="login" class="page">... (与之前版本一致)</div>
-    </div>
+        </div>
 
-    <div id="review-modal" class="modal"><div class="modal-content"><h3>Rate Task</h3><div id="star-box" style="font-size:30px; color:#ddd; margin:15px 0;"><i class="fa-solid fa-star" data-v="1"></i><i class="fa-solid fa-star" data-v="2"></i><i class="fa-solid fa-star" data-v="3"></i><i class="fa-solid fa-star" data-v="4"></i><i class="fa-solid fa-star" data-v="5"></i></div><button class="btn btn-primary" onclick="submitReview()">Confirm</button></div></div>
+    <div id="review-modal" class="modal">
+        <div class="modal-content">
+            <h3>Rate Experience</h3>
+            <div class="stars" id="star-box">
+                <i class="fa-solid fa-star" data-v="1"></i><i class="fa-solid fa-star" data-v="2"></i><i class="fa-solid fa-star" data-v="3"></i><i class="fa-solid fa-star" data-v="4"></i><i class="fa-solid fa-star" data-v="5"></i>
+            </div>
+            <textarea id="rev-comment" class="input-pro" placeholder="Optional comment..."></textarea>
+            <button class="btn btn-primary" onclick="submitReview()">Submit Rating</button>
+        </div>
+    </div>
 
     <script>
         const API = '/api'; 
         let user = JSON.parse(localStorage.getItem('user')) || null;
-        let map=null, markers=[], currentReview=null, selScore=5;
+        let map=null, markers=[], curRevTask=null, curScore=5;
 
         function navigate(p) {
-            if(!user && p!=='login') { p='login'; }
+            if(!user && p!=='login') { window.location.href="#"; } // 需配合登录逻辑
             document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
             document.getElementById(p).classList.add('active');
             updateNav();
             if(p==='home') loadHall();
-            if(p==='dashboard') loadDashboard();
+            if(p==='dashboard') loadDash();
             if(p==='profile') loadProfile();
             if(p==='post-task') setTimeout(initMap, 200);
         }
 
         function updateNav() {
             const menu = document.getElementById('nav-menu');
-            if(!user) { menu.innerHTML='<a onclick="navigate(\'login\')">Login</a>'; return; }
+            if(!user) return;
             menu.innerHTML = `
-                <a onclick="navigate('home')" class="${pActive('home')}">Market</a>
-                <a onclick="navigate('dashboard')" class="${pActive('dashboard')}">Dashboard</a>
-                <a onclick="navigate('post-task')" class="${pActive('post-task')}">Post</a>
-                <a onclick="navigate('profile')" class="${pActive('profile')}">My Profile</a>
+                <a onclick="navigate('home')" class="${pAct('home')}">Market</a>
+                <a onclick="navigate('dashboard')" class="${pAct('dashboard')}">My Jobs</a>
+                <a onclick="navigate('post-task')" class="${pAct('post-task')}">Post</a>
+                <a onclick="navigate('profile')" class="${pAct('profile')}">Profile</a>
                 <a onclick="logout()" style="color:var(--danger)">Logout</a>
             `;
         }
-        const pActive = (id) => document.getElementById(id).classList.contains('active') ? 'active-link' : '';
+        const pAct = (id) => document.getElementById(id).classList.contains('active') ? 'active-link' : '';
         function logout() { localStorage.clear(); location.reload(); }
 
-        function updateFileName(input) { document.getElementById('img-name-display').innerText = input.files[0].name; }
-
+        // 地图逻辑 (取点)
         function initMap() {
             if(map) { map.invalidateSize(); return; }
             map = L.map('map').setView([-36.8509, 174.7645], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            map.on('click', async e => {
+            map.on('click', e => {
                 if(markers.length>=2) { markers.forEach(m=>map.removeLayer(m)); markers=[]; }
                 let m = L.marker(e.latlng).addTo(map); markers.push(m);
-                const addr = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-                if(markers.length===1) document.getElementById('p_from').value = "Loc: " + addr;
-                else document.getElementById('p_to').value = "Loc: " + addr;
+                const loc = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+                if(markers.length===1) document.getElementById('p_from').value = loc;
+                else document.getElementById('p_to').value = loc;
             });
         }
 
+        // 大厅渲染 (展示真实照片)
         async function loadHall() {
             const r = await fetch(`${API}/task/all`); const d = await r.json();
             document.getElementById('hall').innerHTML = d.list.map(t => `
                 <div class="pro-card">
-                    <div style="display:flex; justify-content:space-between"><b>${t.load_weight}</b> <b style="color:var(--success)">${t.reward}</b></div>
-                    <p style="font-size:13px; color:#666">${t.from_addr} -> ${t.to_addr}</p>
-                    <div style="font-size:12px; border-top:1px solid #eee; padding-top:10px; display:flex; justify-content:space-between">
-                        <span>By: ${t.pub_name} (★${t.rating_avg})</span>
-                        ${t.publisher_id!==user.student_id ? `<button onclick="workflow(${t.id}, 'assigned', '${user.student_id}')" style="background:var(--primary); color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer">Accept</button>` : ''}
-                    </div>
+                    ${t.img_url ? `<img src="${t.img_url}" class="task-img">` : ''}
+                    <div style="display:flex; justify-content:space-between"><b>${t.reward}</b> <span style="font-size:12px; color:var(--primary)">★${t.rating_avg}</span></div>
+                    <p style="font-size:13px; color:#666; margin:8px 0">${t.from_addr} → ${t.to_addr}</p>
+                    <div style="font-size:12px; color:#999; margin-bottom:12px;">By: ${t.pub_name}</div>
+                    ${t.publisher_id !== user.student_id ? `<button class="btn btn-primary" style="padding:8px" onclick="workflow(${t.id}, 'assigned', '${user.student_id}')">Accept Job</button>` : ''}
                 </div>
             `).join('');
         }
 
-        async function loadDashboard() {
+        // 看板渲染 (状态流转)
+        async function loadDash() {
             const r = await fetch(`${API}/user/dashboard`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})});
             const d = await r.json();
-            const col = { pending: '', assigned: '', reviewed: '' };
+            const col = { pending: '', assigned: '', finished: '' };
             d.list.forEach(t => {
-                const btn = (t.status==='assigned' && t.publisher_id===user.student_id) ? `<button class="btn btn-primary" style="margin-top:10px" onclick="workflow(${t.id}, 'completed')">Confirm Delivery</button>` : 
-                            (t.status==='completed' && t.publisher_id===user.student_id) ? `<button class="btn btn-primary" style="margin-top:10px" onclick="openReview(${t.id},'${t.helper_id}')">Rate Helper</button>` : '';
-                const h = `<div class="pro-card"><small>${t.move_date} ${t.move_time}</small><div>${t.items_desc}</div>${btn}</div>`;
+                const isPub = t.publisher_id === user.student_id;
+                let btn = '';
+                if(t.status==='assigned' && isPub) btn = `<button class="btn btn-primary" onclick="workflow(${t.id}, 'completed')">Confirm Delivery</button>`;
+                if(t.status==='completed' && isPub) btn = `<button class="btn btn-primary" onclick="openReview(${t.id}, '${t.helper_id}')">Rate Helper</button>`;
+                
+                const h = `<div class="pro-card"><small>${t.move_date}</small><p style="margin:5px 0; font-size:13px;">${t.items_desc}</p>${btn}</div>`;
                 if(t.status==='pending') col.pending += h;
                 else if(t.status==='assigned') col.assigned += h;
-                else col.reviewed += h;
+                else col.finished += h;
             });
             document.getElementById('col-pending').innerHTML = '<h4>Pending</h4>' + col.pending;
             document.getElementById('col-progress').innerHTML = '<h4>Moving</h4>' + col.assigned;
-            document.getElementById('col-finished').innerHTML = '<h4>Done</h4>' + col.reviewed;
+            document.getElementById('col-finished').innerHTML = '<h4>History</h4>' + col.finished;
         }
 
         async function workflow(task_id, status, helper_id=null) {
@@ -201,39 +227,47 @@
             navigate('dashboard');
         }
 
+        // 真实上传逻辑
+        document.getElementById('v8-post-form').onsubmit = async e => {
+            e.preventDefault(); document.getElementById('loader').style.display='flex';
+            const formData = new FormData();
+            const dt = document.getElementById('p_dt').value.split('T');
+            formData.append('publisher_id', user.student_id);
+            formData.append('move_date', dt[0]); formData.append('move_time', dt[1]);
+            formData.append('from_addr', document.getElementById('p_from').value);
+            formData.append('to_addr', document.getElementById('p_to').value);
+            formData.append('reward', document.getElementById('p_reward').value);
+            formData.append('load_weight', document.getElementById('p_weight').value);
+            formData.append('items_desc', document.getElementById('p_items').value);
+            const file = document.getElementById('p_file').files[0];
+            if(file) formData.append('task_image', file);
+            await fetch(`${API}/task/create`, {method:'POST', body:formData});
+            document.getElementById('loader').style.display='none'; navigate('home');
+        };
+
+        // 完整 Profile 加载
         async function loadProfile() {
             const r = await fetch(`${API}/user/profile`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({student_id:user.student_id})});
             const d = await r.json(); const u = d.user;
             document.getElementById('p-avatar').innerText = u.anonymous_name[0];
             document.getElementById('p-anon').innerText = u.anonymous_name;
-            document.getElementById('p-id').innerText = u.student_id; document.getElementById('p-school').innerText = u.school_name;
+            document.getElementById('p-id').innerText = u.student_id;
+            document.getElementById('p-school').innerText = u.school_name;
             document.getElementById('p-name').innerText = u.first_name + ' ' + u.given_name;
-            document.getElementById('p-gender').innerText = u.gender; document.getElementById('p-email').innerText = u.email;
+            document.getElementById('p-gender').innerText = u.gender;
+            document.getElementById('p-email').innerText = u.email;
             document.getElementById('p-phone').innerText = u.phone;
         }
 
-        document.getElementById('v5-post-form').onsubmit = async e => {
-            e.preventDefault();
-            const dt = document.getElementById('p_datetime').value.split('T');
-            const b = {
-                publisher_id: user.student_id, move_date: dt[0], move_time: dt[1],
-                from_addr: document.getElementById('p_from').value, to_addr: document.getElementById('p_to').value,
-                items_desc: document.getElementById('p_items').value, reward: document.getElementById('p_reward').value,
-                has_elevator: document.getElementById('p_elevator').checked ? 1:0, load_weight: document.getElementById('p_weight').value,
-                img_name: document.getElementById('p_img').files[0]?.name || ''
-            };
-            await fetch(`${API}/task/create`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
-            navigate('home');
-        };
-
-        function openReview(id, hId) { currentReview={id, hId}; document.getElementById('review-modal').style.display='flex'; }
-        document.querySelectorAll('#star-box i').forEach(s => s.onclick = function(){ 
-            selScore=this.dataset.v; 
-            document.querySelectorAll('#star-box i').forEach((x,i)=>x.style.color=i<selScore?'#f39c12':'#ddd');
+        // 评价星级交互
+        function openReview(id, hId) { curRevTask={id, hId}; document.getElementById('review-modal').style.display='flex'; }
+        document.querySelectorAll('#star-box i').forEach(s => s.onclick = function(){
+            curScore=this.dataset.v;
+            document.querySelectorAll('#star-box i').forEach((x,i)=>x.classList.toggle('active', i<curScore));
         });
         async function submitReview() {
-            await fetch(`${API}/task/review`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_id:currentReview.id, from_id:user.student_id, to_id:currentReview.hId, score:selScore, comment:'Done'})});
-            document.getElementById('review-modal').style.display='none'; loadDashboard();
+            await fetch(`${API}/task/review`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_id:curRevTask.id, to_id:curRevTask.hId, score:curScore})});
+            document.getElementById('review-modal').style.display='none'; navigate('dashboard');
         }
 
         navigate('home');
